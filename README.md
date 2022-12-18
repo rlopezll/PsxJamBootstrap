@@ -7,10 +7,11 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 
 ## Setup
 
-1. Start by running setup.py which will install all the required dependencies and tools.
-2. Add tools/g++-mipsel/bin to your PATH environment variable
-3. Install visual studio code with C/C++ and GDB extensions
-4. Download the original PsyQ sdk from [PSXDEV](http://www.psxdev.net/downloads.html) for docs and samples.
+1. Before running the install scripts you will need install python3 and git for windows if you don't have them already installed.
+2. Start by running setup.py which will install all the required dependencies and tools.
+3. Add tools/g++-mipsel/bin to your PATH environment variable
+4. Install visual studio code with C/C++ and GDB extensions
+5. Download the original PsyQ sdk from [PSXDEV](http://www.psxdev.net/downloads.html) for docs and samples.
 
 ## Tools
 
