@@ -11,3 +11,7 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 2. Add tools/g++-mipsel/bin to your PATH environment variable
 3. Install visual studio code with C/C++ and GDB extensions
 4. Download the original PsyQ sdk from [PSXDEV](http://www.psxdev.net/downloads.html) for docs and samples.
+
+# Links and Doc
+
+* [Fixed Point Math](http://rsync.irixnet.org/tutorials/pstutorials/chapter1/5-fixedpoint.html)
