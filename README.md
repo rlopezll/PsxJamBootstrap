@@ -12,6 +12,21 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 3. Install visual studio code with C/C++ and GDB extensions
 4. Download the original PsyQ sdk from [PSXDEV](http://www.psxdev.net/downloads.html) for docs and samples.
 
-# Links and Doc
+## Tools
+
+...
+
+## Debugging
+
+To be able to debug using the PCSX-Redux Emulator, you will need to go to Configuration->Emulation and:
+
+* Disable "Dynarec CPU"
+* Enable "Enable Debugger" and "Enable GDB Server"
+
+
+
+## Links and Doc
 
 * [Fixed Point Math](http://rsync.irixnet.org/tutorials/pstutorials/chapter1/5-fixedpoint.html)
+
+

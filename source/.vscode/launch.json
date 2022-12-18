@@ -1,0 +1,31 @@
+{
+    //modify the target and load lines for your elf file
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "gdb",
+            "request": "attach",
+            "name": "(gdb) Launch GDB (Redux)",
+            "target": "localhost:3333",
+            "remote": true,
+            "stopAtConnect": true,
+            "executable": "MAIN.elf",
+            "linux": {
+                "gdbpath": "/usr/bin/gdb-multiarch",
+            },
+            "windows": {
+                "gdbpath": "${workspaceFolder}/../tools/gdb-multiarch/bin/gdb.exe",
+            },
+            
+            "cwd": "${workspaceRoot}",
+            "autorun": [
+                "set substitute-path /project .",
+                "monitor reset shellhalt",
+                "load ./MAIN.elf",
+                "tbreak main",
+                "continue",
+            ],
+            "valuesFormatting": "parseText"
+        }
+    ]
+}
