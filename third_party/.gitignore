@@ -1,0 +1,14 @@
+*.bin
+*.elf
+*.map
+*.cpe
+*.ps-exe
+*.dep
+*.o
+*.a
+
+psyq/include/*
+psyq/lib/*
+!psyq/include/inline_n.h
+
+
