@@ -1,0 +1,3 @@
+[submodule "source/dcLibPsx"]
+	path = source/dcLibPsx
+	url = https://github.com/rlopezll/dcLibPsx.git
