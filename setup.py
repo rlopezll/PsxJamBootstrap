@@ -1,19 +1,20 @@
 import urllib.request
-import time
 import zipfile
 import os
-import sys
+from pyunpack import Archive
 
 def CloneRepo(repourl):
     os.system("git clone " + repourl)
 
 
 def Unzip(filename, dest = None):
-    zip_ref = zipfile.ZipFile(filename, 'r')
+    archive_file = Archive(filename)
     if not dest:
         dest = filename.split('.')[0]
-    zip_ref.extractall(dest)
-    zip_ref.close()
+    if archive_file:
+        if not os.path.exists(dest):
+            os.mkdir(dest)
+        archive_file.extractall(dest)
 
 def Download(url, file_name = None):
 
@@ -59,5 +60,10 @@ os.system("rm " + pcsx)
 mkpsxiso = Download("https://github.com/Lameguy64/mkpsxiso/releases/download/v2.02/mkpsxiso-2.02-win64.zip")
 Unzip(mkpsxiso, 'tools/mkpsxiso')
 os.system("rm " + mkpsxiso)
+
+# psyq converted libs
+psyq = Download("https://psx.arthus.net/sdk/Psy-Q/psyq-4.7-converted-full.7z")
+Unzip(psyq, "third_party/psyq")
+os.system("rm " + psyq)
 
 
