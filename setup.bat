@@ -4,3 +4,5 @@ pip install patool
 pip install pyunpack
 python setup.py
 deactivate
+git submodule init
+git submodule update
