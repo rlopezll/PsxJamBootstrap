@@ -51,7 +51,7 @@ Unzip(gdb, 'tools/gdb-multiarch')
 os.system("rm " + gdb)
 
 # pcsx-redux
-pcsxurl = "https://appcenter-filemanagement-distrib5ede6f06e.azureedge.net/c07c17ad-f60a-41af-a48d-37b374aa9640/pcsx-redux-nightly-12235.20221217.4-x64.zip?sv=2019-02-02&sr=c&sig=k%2FoMxJiJC7mGH55BW8iek8C4cl5ukDBPISO8gPAbRec%3D&se=2022-12-18T22%3A46%3A46Z&sp=r&download_origin=appcenter"
+pcsxurl = "https://gamedevchallenge.000webhostapp.com/downloads/pcsx-redux-nightly-12395.20221220.3-x64.zip"
 pcsx = Download(pcsxurl, 'pcsx-redux.zip')
 Unzip(pcsx, 'tools/pcsx-redux')
 os.system("rm " + pcsx)

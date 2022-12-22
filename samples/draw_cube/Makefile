@@ -2,15 +2,15 @@ TARGET = MAIN
 TYPE = ps-exe
 
 SRCS = main.c \
-../third_party/common/syscalls/printf.s \
-../third_party/common/crt0/crt0.s \
-dcLibPsx/src/dcMemory.c\
-dcLibPsx/src/dcMesh.c\
+../../third_party/common/syscalls/printf.s \
+../../third_party/common/crt0/crt0.s \
+../../source/dcLibPsx/src/dcMemory.c\
+../../source/dcLibPsx/src/dcMesh.c\
 
-CPPFLAGS += -I../third_party/common
-CPPFLAGS += -I../third_party/psyq/include
-CPPFLAGS += -I./dcLibPsx/include
-LDFLAGS += -L../third_party/psyq/lib
+CPPFLAGS += -I../../third_party/common
+CPPFLAGS += -I../../third_party/psyq/include
+CPPFLAGS += -I../../source/dcLibPsx/include
+LDFLAGS += -L../../third_party/psyq/lib
 LDFLAGS += -Wl,--start-group
 LDFLAGS += -lapi
 LDFLAGS += -lc
@@ -36,4 +36,4 @@ LDFLAGS += -lspu
 LDFLAGS += -ltap
 LDFLAGS += -Wl,--end-group
 
-include ../third_party/common.mk
+include ../../third_party/common.mk
