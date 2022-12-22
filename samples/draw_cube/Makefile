@@ -6,6 +6,9 @@ SRCS = main.c \
 ../../third_party/common/crt0/crt0.s \
 ../../source/dcLibPsx/src/dcMemory.c\
 ../../source/dcLibPsx/src/dcMesh.c\
+../../source/dcLibPsx/src/dcCamera.c\
+../../source/dcLibPsx/src/dcUtilsMath.c\
+../../source/dcLibPsx/src/dcRender.c\
 
 CPPFLAGS += -I../../third_party/common
 CPPFLAGS += -I../../third_party/psyq/include

@@ -6,142 +6,61 @@
 #include <libetc.h>
 #include <libgpu.h>
 #include <stdio.h>
+#include <types.h>
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#include "dcUtilsMath.h"
+#include "dcCamera.h"
+#include "dcRender.h"
+#include "dcMemory.h"
 
-#define OTSIZE 4096
-#define SCREEN_Z 512
-#define CUBESIZE 196
+#define CUBESIZE 196 
 
-
-typedef struct DB {
-    DRAWENV draw;
-    DISPENV disp;
-    u_long ot[OTSIZE];
-    POLY_F4 s[6];
-} DB;
-
-static SVECTOR cube_vertices[] = {
+static SDC_Vertex cube_vertices[] = {
     {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}, {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0},
     {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},   {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},
     {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},  {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},
     {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},    {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},
 };
 
-static int cube_indices[] = {
-    0, 1, 2, 3, 1, 5, 6, 2, 5, 4, 7, 6, 4, 0, 3, 7, 4, 5, 1, 0, 6, 7, 3, 2,
+static u_short cube_indices[] = {
+    0, 2, 1, 2, 0, 3,  1, 6, 5, 6, 1, 2,  5, 7, 4, 7, 5, 6,  4, 3, 0, 3, 4, 7,  4, 1, 5, 1, 4, 0,  6, 3, 7, 3, 6, 2,
 };
 
-static void init_cube(DB *db, CVECTOR *col) {
-    size_t i;
-
-    for (i = 0; i < ARRAY_SIZE(db->s); ++i) {
-        SetPolyF4(&db->s[i]);
-        setRGB0(&db->s[i], col[i].r, col[i].g, col[i].b);
-    }
-}
-
-static void add_cube(u_long *ot, POLY_F4 *s, MATRIX *transform) {
-    long p, otz, flg;
-    int nclip;
-    size_t i;
-
-    SetRotMatrix(transform);
-    SetTransMatrix(transform);
-
-    for (i = 0; i < ARRAY_SIZE(cube_indices); i += 4, ++s) {
-        nclip = RotAverageNclip4(&cube_vertices[cube_indices[i + 0]], &cube_vertices[cube_indices[i + 1]],
-                                 &cube_vertices[cube_indices[i + 2]], &cube_vertices[cube_indices[i + 3]],
-                                 (long *)&s->x0, (long *)&s->x1, (long *)&s->x3, (long *)&s->x2, &p, &otz, &flg);
-
-        if (nclip <= 0) continue;
-
-        if ((otz > 0) && (otz < OTSIZE)) AddPrim(&ot[otz], s);
-    }
-}
-
-
-void InitRenderMemory()
-{
-    
-    size_t Primsize = sizeof(POLY_F4);
-    // So, this is 24 bytes, lets says 32 max bytes per primitives.
-    // If we are optimistic we could render, like what? 2000 polys per frame?
-    // 2048 * 32 = 64k for primitives, plus 4096 * 4 = 16k for and Ordering table,
-    // 128k should be enough, with double buffering we shouldn't need more that 256k for render commands.
-
-}
-
+static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, POLIGON_VERTEX };
 
 int main(void) 
 {
-    //InitMemory();  
+    dcMemory_Init();
 
-    DB db[2];
-    DB *cdb;
+    SDC_Render render;
+    SDC_Camera camera;
+    long distance = 900;
+    int  width = 640;
+    int  height = 240;
+
+    CVECTOR meshColor = {255, 0, 0};
+    CVECTOR bgColor = {60, 120, 120};
+    dcRender_Init(&render, width, height, bgColor, 4096, 32, RENDER_MODE_PAL);
+    dcCamera_SetScreenResolution(&camera, width, height);
+    dcCamera_SetCameraPosition(&camera, 0, distance<<12, distance<<12);
+    dcCamera_LookAt(&camera, &VECTOR_ZERO);
+
     SVECTOR rotation = {0};
-    VECTOR translation = {0, 0, (SCREEN_Z * 3) / 2, 0};
+    VECTOR translation = {0, 0, 0, 0};
     MATRIX transform;
-    CVECTOR col[6];
-    size_t i;
-
-    ResetGraph(0);
-    InitGeom();
-
-    SetGraphDebug(0);
-
-    FntLoad(960, 256);
-    SetDumpFnt(FntOpen(32, 32, 320, 64, 0, 512));
-
-    SetGeomOffset(320, 240);
-    SetGeomScreen(SCREEN_Z);
-
-    SetDefDrawEnv(&db[0].draw, 0, 0, 640, 480);
-    SetDefDrawEnv(&db[1].draw, 0, 0, 640, 480);
-    SetDefDispEnv(&db[0].disp, 0, 0, 640, 480);
-    SetDefDispEnv(&db[1].disp, 0, 0, 640, 480);
-
-    srand(0);
-
-    for (i = 0; i < ARRAY_SIZE(col); ++i) {
-        col[i].r = rand();
-        col[i].g = rand();
-        col[i].b = rand();
-    }
-
-    init_cube(&db[0], col);
-    init_cube(&db[1], col);
-
-    SetDispMask(1);
-
-    PutDrawEnv(&db[0].draw);
-    PutDispEnv(&db[0].disp);
 
     while (1) {
-        cdb = (cdb == &db[0]) ? &db[1] : &db[0];
-
         rotation.vy += 16;
-        rotation.vz += 16;
 
         RotMatrix(&rotation, &transform);
         TransMatrix(&transform, &translation);
+        dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
 
-        ClearOTagR(cdb->ot, OTSIZE);
+        FntPrint("GameDev Challenge Cube Demo\n");
 
-        FntPrint("Code compiled using psyq libraries\n\n");
-        FntPrint("converted by psyq-obj-parser\n\n");
-        FntPrint("PCSX-Redux project\n\n");
-        FntPrint("https://bit.ly/pcsx-redux");
+        dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor);
 
-        add_cube(cdb->ot, cdb->s, &transform);
-
-        DrawSync(0);
-        VSync(0);
-
-        ClearImage(&cdb->draw.clip, 60, 120, 120);
-
-        DrawOTag(&cdb->ot[OTSIZE - 1]);
-        FntFlush(-1);
+        dcRender_SwapBuffers(&render);
     }
 
     return 0;

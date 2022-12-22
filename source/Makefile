@@ -2,10 +2,13 @@ TARGET = MAIN
 TYPE = ps-exe
 
 SRCS = main.c \
-../third_party/common/syscalls/printf.s \
-../third_party/common/crt0/crt0.s \
-dcLibPsx/src/dcMemory.c\
-dcLibPsx/src/dcMesh.c\
+		../third_party/common/syscalls/printf.s \
+		../third_party/common/crt0/crt0.s \
+		dcLibPsx/src/dcMemory.c\
+		dcLibPsx/src/dcMesh.c\
+		dcLibPsx/src/dcCamera.c\
+		dcLibPsx/src/dcUtilsMath.c\
+		dcLibPsx/src/dcRender.c\
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include
