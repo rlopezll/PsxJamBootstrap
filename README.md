@@ -26,8 +26,9 @@ To be able to debug using the PCSX-Redux Emulator, you will need to go to Config
 
 
 
-## Links and Doc
+## Links and Docs
 
+* [PSX Game Dev on Windows 10/11 in Visual Studio Code!](https://www.youtube.com/watch?v=Axyq_H_o8gI)
 * [Fixed Point Math](http://rsync.irixnet.org/tutorials/pstutorials/chapter1/5-fixedpoint.html)
 
 
