@@ -7,7 +7,7 @@ SRCS = main.c \
 ../../source/dcLibPsx/src/dcMemory.c\
 ../../source/dcLibPsx/src/dcMesh.c\
 ../../source/dcLibPsx/src/dcCamera.c\
-../../source/dcLibPsx/src/dcUtilsMath.c\
+../../source/dcLibPsx/src/dcMath.c\
 ../../source/dcLibPsx/src/dcRender.c\
 
 CPPFLAGS += -I../../third_party/common
