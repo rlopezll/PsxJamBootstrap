@@ -7,7 +7,7 @@ SRCS = main.c \
 		dcLibPsx/src/dcMemory.c\
 		dcLibPsx/src/dcMesh.c\
 		dcLibPsx/src/dcCamera.c\
-		dcLibPsx/src/dcUtilsMath.c\
+		dcLibPsx/src/dcMath.c\
 		dcLibPsx/src/dcRender.c\
 		dcLibPsx/src/dcCollision.c\
 		dcLibPsx/src/dcMisc.c\
