@@ -399,11 +399,11 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
   constexpr int indexs_by_line = 32;
 	int nindices = mesh.indices.size();
   //swap indices to psx format
-	for (int idx = 0; idx < nindices; idx+=3) {
-    int prev_idx = mesh.indices[idx + 1];
-		mesh.indices[idx + 1] = mesh.indices[idx + 2];
-		mesh.indices[idx + 2] = prev_idx;
-  }
+	//for (int idx = 0; idx < nindices; idx+=3) {
+ //   int prev_idx = mesh.indices[idx + 1];
+	//	mesh.indices[idx + 1] = mesh.indices[idx + 2];
+	//	mesh.indices[idx + 2] = prev_idx;
+ // }
 	for (int idx = 0; idx < nindices; ++idx) {
 	  fprintf(f, "%d", mesh.indices[idx]);
     if (idx < nindices-1)
