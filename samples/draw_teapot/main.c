@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <types.h>
 
-#include "dcUtilsMath.h"
+#include "dcMath.h"
 #include "dcCamera.h"
 #include "dcRender.h"
 #include "dcMemory.h"
@@ -36,7 +36,8 @@ int main(void)
 
     SDC_Render render;
     SDC_Camera camera;
-    long distance = 900;
+    long distanceY = -300;
+    long distanceZ = 300;
     int  width = 640;
     int  height = 240;
 
@@ -44,11 +45,11 @@ int main(void)
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
-    dcCamera_SetCameraPosition(&camera, 0, -(200<<12), distance<<12);
+    dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
     SVECTOR rotation = {0};
-    VECTOR translation = {0, 0, 500, 0};
+    VECTOR translation = {0, 0, 0, 0};
     MATRIX transform;
 
     while (1) {

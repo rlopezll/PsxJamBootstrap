@@ -26,7 +26,7 @@ static u_short cube_indices[] = {
     0, 2, 1, 2, 0, 3,  1, 6, 5, 6, 1, 2,  5, 7, 4, 7, 5, 6,  4, 3, 0, 3, 4, 7,  4, 1, 5, 1, 4, 0,  6, 3, 7, 3, 6, 2,
 };
 
-static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, POLIGON_VERTEX };
+static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, 8, POLIGON_VERTEX };
 
 int main(void) 
 {
@@ -34,7 +34,8 @@ int main(void)
 
     SDC_Render render;
     SDC_Camera camera;
-    long distance = 900;
+    long distanceY = -300;
+    long distanceZ = 300;
     int  width = 640;
     int  height = 240;
 
@@ -42,7 +43,7 @@ int main(void)
     CVECTOR bgColor = {60, 120, 120};
     dcRender_Init(&render, width, height, bgColor, 4096, 32, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
-    dcCamera_SetCameraPosition(&camera, 0, distance<<12, distance<<12);
+    dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
     SVECTOR rotation = {0};
