@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <types.h>
 
-#include "dcUtilsMath.h"
+#include "dcMath.h"
 #include "dcCamera.h"
 #include "dcRender.h"
 #include "dcMemory.h"
