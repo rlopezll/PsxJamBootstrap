@@ -9,6 +9,8 @@ SRCS = main.c \
 		dcLibPsx/src/dcCamera.c\
 		dcLibPsx/src/dcUtilsMath.c\
 		dcLibPsx/src/dcRender.c\
+		dcLibPsx/src/dcCollision.c\
+		dcLibPsx/src/dcMisc.c\
 
 CPPFLAGS += -I../third_party/common
 CPPFLAGS += -I../third_party/psyq/include

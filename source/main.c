@@ -12,6 +12,8 @@
 #include "dcCamera.h"
 #include "dcRender.h"
 #include "dcMemory.h"
+#include "dcMisc.h"
+#include "dcCollision.h"
 
 #define CUBESIZE 196 
 
@@ -31,18 +33,21 @@ static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, POLIGON_VE
 int main(void) 
 {
     dcMemory_Init();
+    PadInit(0);
+
+    SDC_Mesh3D* sphereMesh = dcMisc_generateSphereMesh(CUBESIZE, 7, 7);
 
     SDC_Render render;
     SDC_Camera camera;
-    long distance = 900;
+    long distance = 800;
     int  width = 640;
     int  height = 240;
 
     CVECTOR meshColor = {255, 0, 0};
     CVECTOR bgColor = {60, 120, 120};
-    dcRender_Init(&render, width, height, bgColor, 4096, 32, RENDER_MODE_PAL);
+    dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
-    dcCamera_SetCameraPosition(&camera, 0, distance<<12, distance<<12);
+    dcCamera_SetCameraPosition(&camera, 0, 0, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
     SVECTOR rotation = {0};
@@ -50,15 +55,45 @@ int main(void)
     MATRIX transform;
 
     while (1) {
+
+        // Read pad state and move primitive
+        u_long padState = PadRead(0);
+
+        if( _PAD(0,PADLup ) & padState )
+        {
+            translation.vy -= 32;
+        }
+        if( _PAD(0,PADLdown ) & padState )
+        {
+            translation.vy += 32;
+        }
+        if( _PAD(0,PADLright ) & padState )
+        {
+            translation.vx -= 32;
+        }
+        if( _PAD(0,PADLleft ) & padState )
+        {
+            translation.vx += 32;
+        }
+
         rotation.vy += 16;
 
         RotMatrix(&rotation, &transform);
         TransMatrix(&transform, &translation);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
 
-        FntPrint("GameDev Challenge Cube Demo\n");
+        FntPrint("GameDev Challenge Sphere Demo\n");
 
-        dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor);
+        SVECTOR rayDir = { camera.viewMatrix.m[2][0], camera.viewMatrix.m[2][1], camera.viewMatrix.m[2][2] };
+        VectorNormalSS(&rayDir, &rayDir);
+        if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, 256 ) > 0 )
+        {
+            dcRender_DrawMesh(&render, sphereMesh, &transform, NULL);
+        }
+        else
+        {
+            dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor );
+        }
 
         dcRender_SwapBuffers(&render);
     }
