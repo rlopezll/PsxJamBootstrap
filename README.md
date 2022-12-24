@@ -15,7 +15,7 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 
 ## Tools
 
-...
+- **FBX2PSX**: Conversor from FBX format to .h header file. tools\FBX2PSX\bin\FBX2PSX.exe (see draw_teapot sample)
 
 ## Debugging
 
