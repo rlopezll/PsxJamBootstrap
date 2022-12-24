@@ -86,7 +86,7 @@ int main(void)
 
         SVECTOR rayDir = { camera.viewMatrix.m[2][0], camera.viewMatrix.m[2][1], camera.viewMatrix.m[2][2] };
         VectorNormalSS(&rayDir, &rayDir);
-        if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, 256 ) > 0 )
+        if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, CUBESIZE ) > 0 )
         {
             dcRender_DrawMesh(&render, sphereMesh, &transform, NULL);
         }
