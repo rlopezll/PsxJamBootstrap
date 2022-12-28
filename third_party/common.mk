@@ -76,6 +76,14 @@ endif
 %.dep: %.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -M -MT $(addsuffix .o, $(basename $@)) -MF $@ $<
 
+define OBJCOPYME
+$(PREFIX)-objcopy -I binary --set-section-alignment .data=4 --rename-section .data=.rodata,alloc,load,readonly,data,contents -O $(FORMAT) -B mips $< $@
+endef
+
+# convert TIM file to bin
+%.o: %.tim
+	$(call OBJCOPYME)
+
 # A bit broken, but that'll do in most cases.
 %.dep: %.s
 	touch $@
