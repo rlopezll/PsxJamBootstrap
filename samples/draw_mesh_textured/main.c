@@ -14,6 +14,9 @@
 #include "dcMemory.h"
 
 #include "Teapot001.h"
+#include "Box001.h"
+
+extern unsigned long _binary_smile_tim_start[];
 
 int main(void) 
 {
@@ -26,27 +29,35 @@ int main(void)
     int  width = 640;
     int  height = 240;
 
+    CVECTOR meshColor = {255, 255, 255};
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
     dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
+    TIM_IMAGE tim_smile;
+    dcRender_LoadTexture(&tim_smile, _binary_smile_tim_start);  
+
     SVECTOR rotation = {0};
-    VECTOR translation = {0, 0, 0, 0};
+    VECTOR translationTeapot = {150, 0, 0, 0}; 
+    VECTOR translationCube = {-150, 0, 0, 0}; 
     MATRIX transform;
 
     while (1) {
-        rotation.vy += 16;
+        rotation.vy += 16; 
 
         RotMatrix(&rotation, &transform);
-        TransMatrix(&transform, &translation);
+        TransMatrix(&transform, &translationCube);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
+        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, &tim_smile);  
 
-        FntPrint("GameDev Challenge Teapot Demo\n");
+        RotMatrix(&rotation, &transform);
+        TransMatrix(&transform, &translationTeapot);
+        dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
+        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, NULL, &tim_smile);  
 
-        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, NULL);  
-
+        FntPrint("GameDev Challenge Texture Demo\n");
         dcRender_SwapBuffers(&render);  
     }
 

@@ -16,6 +16,9 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 ## Tools
 
 - **FBX2PSX**: Conversor from FBX format to .h header file. tools\FBX2PSX\bin\FBX2PSX.exe (see draw_teapot sample)
+- **BMP2TIM**: Conversor from BMP format to TIM (psx texture format). tools\BMP2TIM\BMP2TIM.exe (see draw_mesh_textured sample)
+  Example: BMP2TIM.exe smile.bmp smile.tim 4 -org=640,0 -clut=0,480
+
 
 ## Debugging
 
