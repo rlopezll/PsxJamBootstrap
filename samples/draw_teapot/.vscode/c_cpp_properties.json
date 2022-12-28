@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "Linux/Windows",
+            "includePath": [
+                "${workspaceFolder}/../../third_party/**",
+                "${workspaceFolder}/../../source/dcLibPsx/include/**",
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "configurationProvider": "ms-vscode.makefile-tools"
+        }
+    ],
+    "version": 4
+}
