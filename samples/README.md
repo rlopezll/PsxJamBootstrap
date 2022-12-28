@@ -3,7 +3,7 @@
 ## draw_cube
 Draw a red cube sample.
 
-<img src="[https://your-image-url.type](https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_cube.JPG?raw=true)" width="100" height="100">
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_cube.JPG?raw=true" width="100" height="100">
 
 ## draw_teapot
 Draw a teapot, imported from FBX using the tool FBX2PSX.
