@@ -18,10 +18,10 @@
 #define CUBESIZE 196 
 
 static SDC_Vertex cube_vertices[] = {
-    {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}, {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},   {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},  {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},    {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},
+    { {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0} }, { {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0} },
+    { {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0  } }, { {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0  } },
+    { {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0 } }, { {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0   } },
+    { {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0   } }, { {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0   } },
 };
 
 static u_short cube_indices[] = {
@@ -34,6 +34,7 @@ int main(void)
 {
     dcMemory_Init();
     PadInit(0);
+    InitGeom();
 
     SDC_Mesh3D* sphereMesh = dcMisc_generateSphereMesh(CUBESIZE, 7, 7);
 
@@ -43,7 +44,6 @@ int main(void)
     int  width = 640;
     int  height = 240;
 
-    CVECTOR meshColor = {255, 0, 0};
     CVECTOR bgColor = {60, 120, 120};
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
@@ -53,6 +53,24 @@ int main(void)
     SVECTOR rotation = {0};
     VECTOR translation = {0, 0, 0, 0};
     MATRIX transform;
+
+    SDC_DrawParams drawParams = {
+        .tim = NULL,
+        .constantColor = {255, 255, 255},
+        .bLighting = 1,
+        .bUseConstantColor = 1
+    };
+
+    CVECTOR ambientColor = {0, 0, 0};
+    dcRender_SetAmbientColor(&render, &ambientColor );
+
+    SVECTOR lightDir = {DC_ONE, 0, 0 };
+    SVECTOR lightColor = {DC_ONE, 0, 0};
+    dcRender_SetLight(&render, 0, &lightDir, &lightColor);
+
+    SVECTOR lightDir1 = {0, -DC_ONE, 0 };
+    SVECTOR lightColor1 = {0, DC_ONE, 0};
+    dcRender_SetLight(&render, 1, &lightDir1, &lightColor1);
 
     while (1) {
 
@@ -88,11 +106,15 @@ int main(void)
         VectorNormalSS(&rayDir, &rayDir);
         if( dcCollision_RaySphereInteresct(&camera.position, &rayDir, &translation, CUBESIZE ) > 0 )
         {
-            dcRender_DrawMesh(&render, sphereMesh, &transform, NULL);
+            drawParams.bUseConstantColor = 1;
+            drawParams.bLighting = 1;
+            dcRender_DrawMesh(&render, sphereMesh, &transform, &drawParams);
         }
         else
         {
-            dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor );
+            drawParams.bUseConstantColor = 1;
+            drawParams.bLighting = 0;
+            dcRender_DrawMesh(&render, &cubeMesh, &transform, &drawParams );
         }
 
         dcRender_SwapBuffers(&render);

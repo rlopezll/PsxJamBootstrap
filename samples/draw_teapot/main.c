@@ -15,21 +15,6 @@
 
 #include "Teapot001.h"
 
-#define CUBESIZE 196 
-
-static SDC_Vertex cube_vertices[] = {
-    {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}, {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},   {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},  {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},    {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},
-};
-
-static u_short cube_indices[] = {
-    0, 2, 1, 2, 0, 3,  1, 6, 5, 6, 1, 2,  5, 7, 4, 7, 5, 6,  4, 3, 0, 3, 4, 7,  4, 1, 5, 1, 4, 0,  6, 3, 7, 3, 6, 2,
-};
-
-static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, 8, POLIGON_VERTEX };
-
 int main(void) 
 {
     dcMemory_Init();
@@ -41,7 +26,6 @@ int main(void)
     int  width = 640;
     int  height = 240;
 
-    CVECTOR meshColor = {255, 0, 0};
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
@@ -61,7 +45,6 @@ int main(void)
 
         FntPrint("GameDev Challenge Teapot Demo\n");
 
-        // dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor); 
         dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, NULL);  
 
         dcRender_SwapBuffers(&render);  

@@ -4,6 +4,9 @@
 #include <types.h>
 #include "dcRender.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
+
 static SDC_VertexColor Teapot001_Vertices[] = {
     { 70, -120, 0, 0, 73, 69, 38, 0 },
     { 49, -120, 49, 0, 67, 185, 142, 0 },
@@ -170,4 +173,7 @@ static u_short Teapot001_Indices[] = {
     116, 131, 133, 134, 134, 132, 131, 118, 120, 135, 135, 133, 118, 133, 135, 136, 136, 134, 133, 120, 108, 122, 122, 135, 120, 135, 122, 124, 124, 136, 135
 };
 static SDC_Mesh3D Teapot001_Mesh = {Teapot001_Vertices, Teapot001_Indices, NULL, 768, 137, POLIGON_VERTEX_COLOR};
+
+#pragma GCC diagnostic pop
+
 #endif
