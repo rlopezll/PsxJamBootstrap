@@ -321,15 +321,23 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
   }
 
   struct SVertex {
-    float x, y, z;
-    void set(float _x, float _y, float _z) {
+		float x, y, z;
+		float nx, ny, nz;
+		float u, v;
+    void setPos(float _x, float _y, float _z) {
 			x = _x;
       y = _y;
       z = _z;
     }
-    SVertex(float _x, float _y, float _z) {
-      set(_x, _y, _z);
-    }
+		void setUV(float _u, float _v) {
+			u = _v;
+			v = _u;
+		}
+		void setNormal(float _nx, float _ny, float _nz) {
+			nx = _nx;
+			ny = _ny;
+			nz = _nz;
+		}
     bool operator==(const SVertex& vertex) {
       return x == vertex.x && y == vertex.y && z == vertex.z;
     }
@@ -349,56 +357,32 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
     {
       int lControlPointIndex = pMesh->GetPolygonVertex(i, j);
       FbxVector4 pos = lControlPoints[lControlPointIndex];
+      SVertexInfo currVertex;
       if (g_context->inter->setPosition) {
-        SVertex curr_vertex(static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
-        int index = 0;
-        bool bFound = false;
-        for (auto c : allVertexs) {
-          if (c == curr_vertex) {
-            bFound = true;
-						break;
-					}
-          ++index;
-        }
-				if (bFound) {
-					vertexId = index;
-				}
-				else {
-					allVertexs.push_back(curr_vertex);
-					vertexId = allVertexs.size() - 1;
-				}
-        g_context->inter->setPosition(g_context, vertexId, static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
-        //++vertexId;
+    //    SVertex curr_vertex(static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
+    //    int index = 0;
+    //    bool bFound = false;
+    //    for (auto c : allVertexs) {
+    //      if (c == curr_vertex) {
+    //        bFound = true;
+				//		break;
+				//	}
+    //      ++index;
+    //    }
+				//if (bFound) {
+				//	vertexId = index;
+				//}
+				//else {
+				//	allVertexs.push_back(curr_vertex);
+				//	vertexId = allVertexs.size() - 1;
+				//}
+
+				currVertex.x = static_cast<float>(pos.mData[0]);
+				currVertex.y = static_cast<float>(pos.mData[1]);
+				currVertex.z = static_cast<float>(pos.mData[2]);
+        //g_context->inter->setPosition(g_context, vertexId, static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
       }
 
-      for (l = 0; l < pMesh->GetElementVertexColorCount(); l++)
-      {
-        FbxGeometryElementVertexColor* leVtxc = pMesh->GetElementVertexColor(l);
-        if (leVtxc->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-          switch (leVtxc->GetReferenceMode())
-          {
-          case FbxGeometryElement::eDirect:
-          {
-            FbxColor color = leVtxc->GetDirectArray().GetAt(vertexId);
-            if (g_context->inter->setColor) {
-              g_context->inter->setColor(g_context, vertexId, static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha));
-            }
-            break;
-          }
-          case FbxGeometryElement::eIndexToDirect:
-          {
-            int id = leVtxc->GetIndexArray().GetAt(vertexId);
-            FbxColor color = leVtxc->GetDirectArray().GetAt(id);
-            if (g_context->inter->setColor) {
-              g_context->inter->setColor(g_context, vertexId, static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha));
-            }
-          }
-          break;
-          default:
-            break; // other reference modes not shown here!
-          }
-        }
-      }
       for (l = 0; l < pMesh->GetElementUVCount(); ++l)
       {
         FbxGeometryElementUV* leUV = pMesh->GetElementUV(l);
@@ -411,7 +395,9 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
           {
             FbxVector2 vec2 = leUV->GetDirectArray().GetAt(lTextureUVIndex);
             if (g_context->inter->setUV) {
-              g_context->inter->setUV(g_context, vertexId, static_cast<float>(vec2.mData[0]), static_cast<float>(vec2.mData[1]));
+              //g_context->inter->setUV(g_context, vertexId, static_cast<float>(vec2.mData[0]), static_cast<float>(vec2.mData[1]));
+							currVertex.u = static_cast<float>(vec2.mData[0]);
+							currVertex.v = static_cast<float>(vec2.mData[1]);
             }
           }
           break;
@@ -433,7 +419,10 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
           {
             FbxVector4 vtx = leNormal->GetDirectArray().GetAt(vertexId);
             if (g_context->inter->setNormal) {
-              g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
+              //g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
+							currVertex.nx = static_cast<float>(vtx.mData[0]);
+							currVertex.ny = static_cast<float>(vtx.mData[1]);
+							currVertex.nz = static_cast<float>(vtx.mData[2]);
             }
             break;
           }
@@ -442,7 +431,10 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
             int id = leNormal->GetIndexArray().GetAt(vertexId);
             FbxVector4 vtx = leNormal->GetDirectArray().GetAt(id);
             if (g_context->inter->setNormal) {
-              g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
+              //g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
+							currVertex.nx = static_cast<float>(vtx.mData[0]);
+							currVertex.ny = static_cast<float>(vtx.mData[1]);
+							currVertex.nz = static_cast<float>(vtx.mData[2]);
             }
           }
           break;
@@ -450,8 +442,41 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
             break; // other reference modes not shown here!
           }
         }
-
       }
+      vertexId = g_context->inter->getVertexIndex(g_context, currVertex);
+      assert(vertexId >= 0);
+			g_context->inter->setPosition(g_context, vertexId, currVertex.x, currVertex.y, currVertex.z);
+			g_context->inter->setUV(g_context, vertexId, currVertex.u, currVertex.v);
+			g_context->inter->setNormal(g_context, vertexId, currVertex.nx, currVertex.ny, currVertex.nz);
+
+			for (l = 0; l < pMesh->GetElementVertexColorCount(); l++)
+			{
+				FbxGeometryElementVertexColor* leVtxc = pMesh->GetElementVertexColor(l);
+				if (leVtxc->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+					switch (leVtxc->GetReferenceMode())
+					{
+					case FbxGeometryElement::eDirect:
+					{
+						FbxColor color = leVtxc->GetDirectArray().GetAt(vertexId);
+						if (g_context->inter->setColor) {
+							g_context->inter->setColor(g_context, vertexId, static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha));
+						}
+						break;
+					}
+					case FbxGeometryElement::eIndexToDirect:
+					{
+						int id = leVtxc->GetIndexArray().GetAt(vertexId);
+						FbxColor color = leVtxc->GetDirectArray().GetAt(id);
+						if (g_context->inter->setColor) {
+							g_context->inter->setColor(g_context, vertexId, static_cast<float>(color.mRed), static_cast<float>(color.mGreen), static_cast<float>(color.mBlue), static_cast<float>(color.mAlpha));
+						}
+					}
+					break;
+					default:
+						break; // other reference modes not shown here!
+					}
+				}
+			}
 
       for (l = 0; l < pMesh->GetElementTangentCount(); ++l)
       {

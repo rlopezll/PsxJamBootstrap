@@ -1,15 +1,33 @@
 #pragma once
 
+#include <string.h>
+
 enum ResultParserFBX {
   OK,
   FBX_MUST_BE_TRIANGLES,
   CAN_OPEN_SCENE
 };
 
+struct SVertexInfo {
+  float x,y,z;
+  float nx,ny,nz;
+  float u,v;
+  SVertexInfo() {
+    memset(this, 0x0, sizeof(SVertexInfo));
+  }
+  static bool compareVertex(const SVertexInfo& v1, const SVertexInfo& v2) {
+    return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z;
+  }
+	static bool compareVertexUVs(const SVertexInfo& v1, const SVertexInfo& v2) {
+		return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z && v1.u == v2.u && v1.v == v2.v;
+	}
+};
+
 typedef struct TImporterContext TImporterContext;
 
 typedef struct {
 
+  int  (*getVertexIndex)(TImporterContext* context, const SVertexInfo& vertex);
   void (*setNumVertices)(TImporterContext *context, int nvertices);
   void (*addMesh)(TImporterContext *context, const char *name, float *mtx);
   void (*setFormatVertex)(TImporterContext *context, bool has_uvs, bool has_color, bool has_normals, bool has_tangents, bool has_binormals);

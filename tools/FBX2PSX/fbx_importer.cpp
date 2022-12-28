@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "file_utils.h"
 #include "string_utils.h"
+#include <functional>
 
 struct Vector3 {
   short x,y,z;
@@ -22,9 +23,12 @@ struct Vector3 {
 
 struct Vector2 {
   short x, y;
-	void Set(float _x, float _y) {
-		x = (short)_x;
-		y = (short)_y;
+	void Set(short _x, short _y) {
+		x = _x;
+		y = _y;
+	}
+	bool operator==(const Vector2& pos) {
+		return x == pos.x && y == pos.y;
 	}
 };
 
@@ -108,6 +112,7 @@ struct TMesh {
   Matrix44             mtx;
 	unsigned int         nframes;
 	TTransform*          transforms;
+	std::vector<SVertexInfo> all_vertices; //used to search unique vertexs
 
   TMesh() : vertex_type(TMesh::VERTEX_POSITION) {}
   int GetVertexIdx(const Vector3 &position) const {
@@ -211,6 +216,27 @@ void setFormatVertex(TImporterContext *context, bool has_uvs, bool has_color, bo
   mesh->vertex_type = vertex_type;
   mesh->nbytes_per_vertex = nbytes_per_vertex;
 }
+
+int getVertexIndex(TImporterContext* context, const SVertexInfo &vertex) {
+	TImporter* importer = static_cast<TImporter*>(context->user_data);
+	TMesh* mesh = importer->getMesh();
+	std::function<bool(const SVertexInfo&, const SVertexInfo&)> compareFunc;
+
+	if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX || importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_COLOR) {
+		compareFunc = SVertexInfo::compareVertex;
+	}
+	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_COLOR_UV || importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_UV) {
+		compareFunc = SVertexInfo::compareVertexUVs;
+	}
+	for (int idx = 0; idx < mesh->all_vertices.size(); ++idx)
+	{
+		if (compareFunc(vertex, mesh->all_vertices[idx])) 
+			return idx;
+	}
+	//Add New Vertex
+	mesh->all_vertices.push_back(vertex);
+	return mesh->all_vertices.size()-1;
+}
      
 void setPosition(TImporterContext *context, int idx, float x, float y, float z) {
   TImporter *importer = static_cast<TImporter *>(context->user_data);
@@ -242,37 +268,39 @@ void setUV(TImporterContext *context, int idx, float u, float v) {
 	if(!mesh->hasUVs())
 		return;
 
+	int u_scale = importer->m_params.m_textureSize[0];
+	int v_scale = importer->m_params.m_textureSize[1];
 	char* base = (char*)mesh->vertices;
 	char* curr = base + mesh->nbytes_per_vertex * idx;
+	short u_normalized = (short)(u * (u_scale - 1));
+	if (u > 1.0f) {
+		u_normalized = (short)(u * u_scale) % (u_scale);
+	}
+	short v_normalized = (short)(v * (v_scale - 1));
+	if (v > 1.0f) {
+		v_normalized = (short)(v * v_scale) % (v_scale);
+	}
+	assert(u_normalized < u_scale);
+	assert(v_normalized < v_scale);
+	if (importer->m_params.m_flipUVFlags & (int)TImportParams::EFlipUVFlag::VERTICAL_FLIP) {
+		v_normalized = (v_scale - 1) - v_normalized;
+	}
+	if (importer->m_params.m_flipUVFlags & (int)TImportParams::EFlipUVFlag::HORIZONTAL_FLIP) {
+		u_normalized = (u_scale - 1) - u_normalized;
+	}
+
+
 	if (mesh->vertex_type == TMesh::VERTEX_POSITION_UV) {
     TMesh::TVertexPosUV *vtx = (TMesh::TVertexPosUV *)curr;
-		vtx->uv.Set(u * 255, v * 255);
-   /* if (importer->params.texcoord_flip & TImportDAEParams::VERTICAL_FLIP) {
-      vtx->uv.y = -vtx->uv.y;
-    }
-    if (importer->params.texcoord_flip & TImportDAEParams::HORIZONTAL_FLIP) {
-      vtx->uv.x = -vtx->uv.x;
-    }*/
+		vtx->uv.Set(u_normalized, v_normalized);
   }
 	else if (mesh->vertex_type == TMesh::VERTEX_POSITION_NORMAL_UV) {
 		TMesh::TVertexPosNormalUV* vtx = (TMesh::TVertexPosNormalUV*)curr;
-		vtx->uv.Set(u * 255, v * 255);
-		/* if (importer->params.texcoord_flip & TImportDAEParams::VERTICAL_FLIP) {
-			 vtx->uv.y = -vtx->uv.y;
-		 }
-		 if (importer->params.texcoord_flip & TImportDAEParams::HORIZONTAL_FLIP) {
-			 vtx->uv.x = -vtx->uv.x;
-		 }*/
+		vtx->uv.Set(u_normalized, v_normalized);
 	}
   else {
     TMesh::TVertexPosColorUV *vtx = (TMesh::TVertexPosColorUV*)curr;
-		vtx->uv.Set(u * 255, v * 255);
-    /*if (importer->params.texcoord_flip & TImportDAEParams::VERTICAL_FLIP) {
-      vtx->uv.y = -vtx->uv.y;
-    }
-    if (importer->params.texcoord_flip & TImportDAEParams::HORIZONTAL_FLIP) {
-      vtx->uv.x = -vtx->uv.x;
-    }*/
+		vtx->uv.Set(u_normalized, v_normalized);
   }
 }
 
@@ -326,7 +354,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		fprintf(f, "static SDC_Vertex %s_Vertices[] = {\n", mesh.name.c_str());
     const TMesh::TVertex* vertices = (const TMesh::TVertex*)mesh.vertices;
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
-			fprintf(f, "    { %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z);
+			fprintf(f, "    { %d, %d, %d, 0}", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z);
       if (idx < mesh.nvertices - 1) 
 				fprintf(f, ",\n");
       else
@@ -360,7 +388,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		fprintf(f, "static SDC_VertexTextured %s_Vertices[] = {\n", mesh.name.c_str());
 		const TMesh::TVertexPosUV* vertices = (const TMesh::TVertexPosUV*)mesh.vertices;
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
-			fprintf(f, "    { %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].uv.x, vertices[idx].uv.y);
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].uv.x, vertices[idx].uv.y);
 			if (idx < mesh.nvertices - 1)
 				fprintf(f, ",\n");
 			else
@@ -372,7 +400,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		const TMesh::TVertexPosColor* vertices = (const TMesh::TVertexPosColor*)mesh.vertices;
 		srand(0);
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
-			fprintf(f, "    { %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255);
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0 }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255);
 			//fprintf(f, "    { %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].color.x, vertices[idx].color.y, vertices[idx].color.z);
 			if (idx < mesh.nvertices - 1)
 				fprintf(f, ",\n");
@@ -385,7 +413,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		const TMesh::TVertexPosColorUV* vertices = (const TMesh::TVertexPosColorUV*)mesh.vertices;
 		srand(0);
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
-			fprintf(f, "    { %d, %d, %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255, vertices[idx].uv.x, vertices[idx].uv.y);
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255, vertices[idx].uv.x, vertices[idx].uv.y);
 			//fprintf(f, "    { %d, %d, %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].color.x, vertices[idx].color.y, vertices[idx].color.z, vertices[idx].uv.x, vertices[idx].uv.y);
 			if (idx < mesh.nvertices - 1)
 				fprintf(f, ",\n");
@@ -492,10 +520,14 @@ bool importMeshFromFBX(const char *filename, const TImportParams &params) {
   context.inter->setTangent = &setTangent;
   context.inter->setBinormal = nullptr;
   context.inter->setTexture = &setTexture;
+	context.inter->getVertexIndex = &getVertexIndex;
   context.user_data =(void *)(&fbx);
   ResultParserFBX res = parserFBX(filename, &context);
   if (res == ResultParserFBX::OK) {
     doMeshes(filename, params, fbx);
   }
+	else if (res == ResultParserFBX::FBX_MUST_BE_TRIANGLES) {
+		printf("Error: ResultParserFBX = FBX Must Be Triangles");
+	}
   return res == ResultParserFBX::OK;
 }

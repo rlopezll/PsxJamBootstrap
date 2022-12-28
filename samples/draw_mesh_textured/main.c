@@ -14,21 +14,9 @@
 #include "dcMemory.h"
 
 #include "Teapot001.h"
+#include "Box001.h"
 
-#define CUBESIZE 196 
-
-static SDC_Vertex cube_vertices[] = {
-    {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}, {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},   {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},  {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},    {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},
-};
-
-static u_short cube_indices[] = {
-    0, 2, 1, 2, 0, 3,  1, 6, 5, 6, 1, 2,  5, 7, 4, 7, 5, 6,  4, 3, 0, 3, 4, 7,  4, 1, 5, 1, 4, 0,  6, 3, 7, 3, 6, 2,
-};
-
-static SDC_Mesh3D cubeMesh = { cube_vertices, cube_indices, NULL, 36, 8, POLIGON_VERTEX };
+extern unsigned long _binary_smile_tim_start[];
 
 int main(void) 
 {
@@ -41,29 +29,35 @@ int main(void)
     int  width = 640;
     int  height = 240;
 
-    CVECTOR meshColor = {255, 0, 0};
+    CVECTOR meshColor = {255, 255, 255};
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
     dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
+    TIM_IMAGE tim_smile;
+    dcRender_LoadTexture(&tim_smile, _binary_smile_tim_start);  
+
     SVECTOR rotation = {0};
-    VECTOR translation = {0, 0, 0, 0};
+    VECTOR translationTeapot = {150, 0, 0, 0}; 
+    VECTOR translationCube = {-150, 0, 0, 0}; 
     MATRIX transform;
 
     while (1) {
-        rotation.vy += 16;
+        rotation.vy += 16; 
 
         RotMatrix(&rotation, &transform);
-        TransMatrix(&transform, &translation);
+        TransMatrix(&transform, &translationCube);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
+        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, &tim_smile);  
 
-        FntPrint("GameDev Challenge Teapot Demo\n");
+        RotMatrix(&rotation, &transform);
+        TransMatrix(&transform, &translationTeapot);
+        dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
+        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, NULL, &tim_smile);  
 
-        // dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor); 
-        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, NULL);  
-
+        FntPrint("GameDev Challenge Texture Demo\n");
         dcRender_SwapBuffers(&render);  
     }
 

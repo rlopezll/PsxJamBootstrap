@@ -59,7 +59,7 @@ int main(void)
 
         FntPrint("GameDev Challenge Cube Demo\n");
 
-        dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor);
+        dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor, NULL);
 
         dcRender_SwapBuffers(&render);
     }
