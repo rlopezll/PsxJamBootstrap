@@ -16,10 +16,10 @@
 #define CUBESIZE 196 
 
 static SDC_Vertex cube_vertices[] = {
-    {-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}, {CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},   {-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0},
-    {-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},  {CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0},
-    {CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},    {-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0},
+    {{-CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}}, {{CUBESIZE / 2, -CUBESIZE / 2, -CUBESIZE / 2, 0}},
+    {{CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0}},   {{-CUBESIZE / 2, CUBESIZE / 2, -CUBESIZE / 2, 0}},
+    {{-CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0}},  {{CUBESIZE / 2, -CUBESIZE / 2, CUBESIZE / 2, 0}},
+    {{CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0}},    {{-CUBESIZE / 2, CUBESIZE / 2, CUBESIZE / 2, 0}},
 };
 
 static u_short cube_indices[] = {
@@ -46,6 +46,13 @@ int main(void)
     dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
+    SDC_DrawParams drawParams = {
+        .tim = NULL,
+        .constantColor = meshColor,
+        .bLighting = 0,
+        .bUseConstantColor = 1
+    };
+
     SVECTOR rotation = {0};
     VECTOR translation = {0, 0, 0, 0};
     MATRIX transform;
@@ -59,7 +66,7 @@ int main(void)
 
         FntPrint("GameDev Challenge Cube Demo\n");
 
-        dcRender_DrawMesh(&render, &cubeMesh, &transform, &meshColor);
+        dcRender_DrawMesh(&render, &cubeMesh, &transform, &drawParams);
 
         dcRender_SwapBuffers(&render);
     }

@@ -34,6 +34,7 @@ CPPFLAGS += -mno-gpopt -fomit-frame-pointer
 CPPFLAGS += -fno-builtin -fno-strict-aliasing -Wno-attributes
 CPPFLAGS += $(ARCHFLAGS)
 CPPFLAGS += -I$(ROOTDIR)
+CPPFLAGS += -Werror -Wall
 
 LDFLAGS += -Wl,-Map=$(BINDIR)$(TARGET).map -nostdlib -T$(LDSCRIPT) -static -Wl,--gc-sections
 LDFLAGS += $(ARCHFLAGS) -Wl,--oformat=$(FORMAT)
