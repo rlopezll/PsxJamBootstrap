@@ -28,7 +28,6 @@ int main(void)
     dcMemory_Init();
 
     SDC_Render render;
-    SDC_Camera camera;
     int  width = 320;
     int  height = 240;
 
@@ -39,7 +38,6 @@ int main(void)
     dcSprite_LoadAnimationTex(&sonic_run, _binary_sonic_tim_start);
     dcSprite_SetAnimation(&sonic_sprite, &sonic_run);
  
-    DVECTOR UVs = {58,0};
     CVECTOR Color = {128, 128, 128};
     while (1) {
         FntPrint("GameDev Challenge Draw Sprite\n");

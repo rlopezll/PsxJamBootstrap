@@ -29,7 +29,6 @@ int main(void)
     int  width = 640;
     int  height = 240;
 
-    CVECTOR meshColor = {255, 255, 255};
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 8192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
@@ -44,18 +43,20 @@ int main(void)
     VECTOR translationCube = {-150, 0, 0, 0}; 
     MATRIX transform;
 
+    SDC_DrawParams draw_params;
+    draw_params.tim = &tim_smile;
     while (1) {
         rotation.vy += 16; 
 
         RotMatrix(&rotation, &transform);
         TransMatrix(&transform, &translationCube);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, &tim_smile);  
+        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, &draw_params);  
 
         RotMatrix(&rotation, &transform);
         TransMatrix(&transform, &translationTeapot);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, NULL, &tim_smile);  
+        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, &draw_params);  
 
         FntPrint("GameDev Challenge Texture Demo\n");
         dcRender_SwapBuffers(&render);  
