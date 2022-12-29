@@ -235,7 +235,7 @@ FbxAMatrix GetGlobalDefaultPosition(FbxNode* pNode)
 }
 
 ResultParserFBX processNode(FbxNode* node, bool is_root_node) {
-  ResultParserFBX ret;
+  ResultParserFBX ret = OK;
   const char *name = node->GetName();
   FbxAMatrix matrix = GetGlobalDefaultPosition(node);
   float mtx[16];
@@ -294,7 +294,8 @@ ResultParserFBX processNode(FbxNode* node, bool is_root_node) {
   }
   */
 
-  for (int i = 0; i < node->GetChildCount(); ++i) {
+  int childCount = node->GetChildCount();
+  for (int i = 0; i < childCount; ++i) {
     FbxNode *node_child = node->GetChild(i);
     ret = processNode(node_child, false);
     if (ret != ResultParserFBX::OK)

@@ -7,6 +7,13 @@
 #include "string_utils.h"
 #include "fbx_importer.h"
 
+// DEFINITIONS
+#define gfPI  (3.141592653f)     // pi
+#define gfPI2 (3.141592653f*2.0f) // 2*pi
+
+#define DEG2RAD( a ) ( (a) * (gfPI/180.0f) )
+#define RAD2DEG( a ) ( (a) * (180.0f/gfPI) )
+
 struct TArgsParser {
 	int argc;
 	char** argv;
@@ -38,6 +45,15 @@ struct TArgsParser {
 		}
 		return false;
 	}
+	float GetFloatArg(const std::string& name, float& out_value) const {
+		for (int idx = 0; idx < argc - 1; ++idx) {
+			if (name == argv[idx]) {
+				out_value = (float)atof(argv[idx + 1]);
+				return true;
+			}
+		}
+		return false;
+	}
 };
 
 std::vector<std::string> split(const std::string& s, char seperator)
@@ -62,13 +78,20 @@ int main(int argc, char** argv)
 		printf("-fbx <input_fbx_filename>\n");
 		printf("-outdir <out_folder_h>\n");
 		printf("-vertex_format <out_folder_h>\n");
-		printf("-vertex_format <0/1/2/3> OPTIONAL default:0\n");
+		printf("-vertex_format <0/1/2/3/4/5/6> OPTIONAL default:0\n");
 		printf("    0: VERTEX\n");
 		printf("    1: VERTEX_COLOR\n");
-		printf("    2: VERTEX_UV -> TODO\n");
-		printf("    3: VERTEX_COLOR_UV -> TODO\n");
+		printf("    2: VERTEX_UV\n");
+		printf("    3: VERTEX_COLOR_UV\n");
+		printf("    4: VERTEX_NORMAL\n");
+		printf("    5: VERTEX_NORMAL_COLOR\n");
+		printf("    6: VERTEX_NORMAL_UV\n");
 		printf("-texture_size <x,y>\n");
 		printf("-invertY <0/1> OPTIONAL default:1\n");
+		printf("-scale   <value> OPTIONAL default:1\n");
+		printf("-yaw     <value in degrees> OPTIONAL default:0\n");
+		printf("-pitch   <value in degrees> OPTIONAL default:0\n");
+		printf("-roll    <value in degrees> OPTIONAL default:0\n");
 		printf("Example command line:\n");
 		printf("    FBX2PSX.exe -fbx teapod.fbx -outdir D:\\code\\psxdev\\jam\\PsxJamBootstrap\\source -invertY 1 -vertex_format 1");
 		return 0;
@@ -78,6 +101,10 @@ int main(int argc, char** argv)
 	args_parser.argv = argv;
 	std::string fbx_filename;
 	bool bInvertyY = true;
+	float scale = 1.0f;
+	float yaw = 0.0f;
+	float pitch = 0.0f;
+	float roll = 0.0f;
 	int oVertexFormat = (int)TImportParams::EVertexFormatOutput::VERTEX;
 	TImportParams params;
 	if (!args_parser.GetStringArg("-fbx", fbx_filename)) {
@@ -113,9 +140,24 @@ int main(int argc, char** argv)
 		params.m_vertexFormatOutput = (TImportParams::EVertexFormatOutput)oVertexFormat;
 	}
 	args_parser.GetBoolArg("-invertY", bInvertyY);
-	if(bInvertyY)
+	if (bInvertyY) {
 		params.m_scalarVector[1] = -params.m_scalarVector[1];
-
+	}
+	if (args_parser.GetFloatArg("-scale", scale)) {
+		params.m_scalarVector[0] *= scale;
+		params.m_scalarVector[1] *= scale;
+		params.m_scalarVector[2] *= scale;
+	}
+	if (args_parser.GetFloatArg("-yaw", yaw)) {
+		yaw = DEG2RAD(yaw);
+	}
+	if (args_parser.GetFloatArg("-pitch", pitch)) {
+		pitch = DEG2RAD(pitch);
+	}
+	if (args_parser.GetFloatArg("-roll", roll)) {
+		roll = DEG2RAD(roll);
+	}
+	params.m_rotationMatrix.SetYawPitchRoll(yaw, pitch, roll);
 	params.refreshAbsolutePaths();
 	importMeshFromFBX(fbx_filename.c_str(), params);
 
