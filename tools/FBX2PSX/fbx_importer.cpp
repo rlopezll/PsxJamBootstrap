@@ -9,6 +9,9 @@
 #include "string_utils.h"
 #include <functional>
 
+const Vector3f Vector3f::Zero = { 0.0f, 0.0f, 0.0f };
+const Vector3f Vector3f::One = { 1.0f, 1.0f, 1.0f };
+
 struct Vector3 {
   short x,y,z;
   void Set(float _x, float _y, float _z) {
@@ -59,9 +62,9 @@ struct TMesh {
 	struct TVertexPosColor : public TVertex {
 		Vector3 color;
 		void init() {
-			color.x = 255.0f;
-			color.y = 255.0f;
-			color.z = 255.0f;
+			color.x = 255;
+			color.y = 255;
+			color.z = 255;
     }
 	};
 
@@ -109,7 +112,7 @@ struct TMesh {
 	std::vector<int>     indices;
 	TVertexType          vertex_type;
 	size_t               nbytes_per_vertex;
-  Matrix44             mtx;
+  Matrix44             fbxMtx;
 	unsigned int         nframes;
 	TTransform*          transforms;
 	std::vector<SVertexInfo> all_vertices; //used to search unique vertexs
@@ -187,7 +190,7 @@ void addMesh(TImporterContext *context, const char *name, float *mtx) {
 	TMesh* mesh = importer->addMesh();
   assert(mesh);
   mesh->name = name;
-  memcpy(&mesh->mtx.v[0], mtx, sizeof(Matrix44));
+  memcpy(&mesh->fbxMtx.v[0], mtx, sizeof(Matrix44));
 }
 
 void setFormatVertex(TImporterContext *context, bool has_uvs, bool has_color, bool has_normals, bool has_tangents, bool has_binormals) {
@@ -262,7 +265,7 @@ int getVertexIndex(TImporterContext* context, const SVertexInfo &vertex) {
 	}
 	//Add New Vertex
 	mesh->all_vertices.push_back(vertex);
-	return mesh->all_vertices.size()-1;
+	return (int)mesh->all_vertices.size()-1;
 }
      
 void setPosition(TImporterContext *context, int idx, float x, float y, float z) {
@@ -273,9 +276,10 @@ void setPosition(TImporterContext *context, int idx, float x, float y, float z) 
   char *curr = base + mesh->nbytes_per_vertex * idx;
 	Vector3f fbxPosition;
 	fbxPosition.Set(x, y, z);
-	fbxPosition = importer->m_params.m_rotationMatrix * fbxPosition;
+	fbxPosition = importer->m_params.m_matrix * fbxPosition;
+	fbxPosition = mesh->fbxMtx * fbxPosition;
   TMesh::TVertex *vtx = (TMesh::TVertex *)curr;
-  vtx->pos.Set(importer->m_params.m_scalarVector[0] * fbxPosition.x, importer->m_params.m_scalarVector[1] * fbxPosition.y, importer->m_params.m_scalarVector[2] * fbxPosition.z);
+  vtx->pos.Set(fbxPosition.x, fbxPosition.y, fbxPosition.z);
   mesh->indices.push_back(idx);
   mesh->nvertices = std::max(mesh->nvertices, (unsigned int)idx+1);
 }
@@ -483,11 +487,11 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
   constexpr int indexs_by_line = 32;
 	int nindices = mesh.indices.size();
   //swap indices to psx format
-	//for (int idx = 0; idx < nindices; idx+=3) {
- //   int prev_idx = mesh.indices[idx + 1];
-	//	mesh.indices[idx + 1] = mesh.indices[idx + 2];
-	//	mesh.indices[idx + 2] = prev_idx;
- // }
+	for (int idx = 0; idx < nindices; idx += 3) {
+		int prev_idx = mesh.indices[idx + 1];
+		mesh.indices[idx + 1] = mesh.indices[idx + 2];
+		mesh.indices[idx + 2] = prev_idx;
+	}
 	for (int idx = 0; idx < nindices; ++idx) {
 	  fprintf(f, "%d", mesh.indices[idx]);
     if (idx < nindices-1)
@@ -529,7 +533,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		}
 		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL_UV:
 		{
-			vertex_type_str = "POLIGON_VERTEX_TEXTURED_COLOR";
+			vertex_type_str = "POLIGON_VERTEX_TEXTURED_NORMAL";
 			break;
 		}
 	}

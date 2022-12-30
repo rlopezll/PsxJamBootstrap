@@ -218,7 +218,11 @@ FbxAMatrix GetGlobalDefaultPosition(FbxNode* pNode)
   FbxAMatrix lParentGlobalPosition;
 
   lLocalPosition.SetT(pNode->LclTranslation.Get());
-  lLocalPosition.SetR(pNode->LclRotation.Get());
+  FbxDouble3 Rotation = pNode->LclRotation.Get();
+  FbxDouble aux = -Rotation.mData[1];
+	Rotation.mData[1] = Rotation.mData[2];
+	Rotation.mData[2] = aux;
+  lLocalPosition.SetR(Rotation);
   lLocalPosition.SetS(pNode->LclScaling.Get());
 
   if (pNode->GetParent())
@@ -360,28 +364,9 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
       FbxVector4 pos = lControlPoints[lControlPointIndex];
       SVertexInfo currVertex;
       if (g_context->inter->setPosition) {
-    //    SVertex curr_vertex(static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
-    //    int index = 0;
-    //    bool bFound = false;
-    //    for (auto c : allVertexs) {
-    //      if (c == curr_vertex) {
-    //        bFound = true;
-				//		break;
-				//	}
-    //      ++index;
-    //    }
-				//if (bFound) {
-				//	vertexId = index;
-				//}
-				//else {
-				//	allVertexs.push_back(curr_vertex);
-				//	vertexId = allVertexs.size() - 1;
-				//}
-
 				currVertex.x = static_cast<float>(pos.mData[0]);
 				currVertex.y = static_cast<float>(pos.mData[1]);
 				currVertex.z = static_cast<float>(pos.mData[2]);
-        //g_context->inter->setPosition(g_context, vertexId, static_cast<float>(pos.mData[0]), static_cast<float>(pos.mData[1]), static_cast<float>(pos.mData[2]));
       }
 
       for (l = 0; l < pMesh->GetElementUVCount(); ++l)
@@ -396,7 +381,6 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
           {
             FbxVector2 vec2 = leUV->GetDirectArray().GetAt(lTextureUVIndex);
             if (g_context->inter->setUV) {
-              //g_context->inter->setUV(g_context, vertexId, static_cast<float>(vec2.mData[0]), static_cast<float>(vec2.mData[1]));
 							currVertex.u = static_cast<float>(vec2.mData[0]);
 							currVertex.v = static_cast<float>(vec2.mData[1]);
             }
@@ -408,47 +392,21 @@ ResultParserFBX processMesh(FbxMesh* pMesh)
         }
       }
 
-      for (l = 0; l < pMesh->GetElementNormalCount(); ++l)
-      {
-        FbxGeometryElementNormal* leNormal = pMesh->GetElementNormal(l);
-
-        if (leNormal->GetMappingMode() == FbxGeometryElement::eByPolygonVertex)
-        {
-          switch (leNormal->GetReferenceMode())
-          {
-          case FbxGeometryElement::eDirect:
-          {
-            FbxVector4 vtx = leNormal->GetDirectArray().GetAt(vertexId);
-            if (g_context->inter->setNormal) {
-              //g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
-							currVertex.nx = static_cast<float>(vtx.mData[0]);
-							currVertex.ny = static_cast<float>(vtx.mData[1]);
-							currVertex.nz = static_cast<float>(vtx.mData[2]);
-            }
-            break;
-          }
-          case FbxGeometryElement::eIndexToDirect:
-          {
-            int id = leNormal->GetIndexArray().GetAt(vertexId);
-            FbxVector4 vtx = leNormal->GetDirectArray().GetAt(id);
-            if (g_context->inter->setNormal) {
-              //g_context->inter->setNormal(g_context, vertexId, static_cast<float>(vtx.mData[0]), static_cast<float>(vtx.mData[1]), static_cast<float>(vtx.mData[2]));
-							currVertex.nx = static_cast<float>(vtx.mData[0]);
-							currVertex.ny = static_cast<float>(vtx.mData[1]);
-							currVertex.nz = static_cast<float>(vtx.mData[2]);
-            }
-          }
-          break;
-          default:
-            break; // other reference modes not shown here!
-          }
-        }
+      FbxVector4 pNormal;
+      if (pMesh->GetPolygonVertexNormal(i, j, pNormal)) {
+				currVertex.nx = static_cast<float>(pNormal.mData[0]);
+				currVertex.ny = static_cast<float>(pNormal.mData[1]);
+				currVertex.nz = static_cast<float>(pNormal.mData[2]);
       }
+
       vertexId = g_context->inter->getVertexIndex(g_context, currVertex);
       assert(vertexId >= 0);
-			g_context->inter->setPosition(g_context, vertexId, currVertex.x, currVertex.y, currVertex.z);
-			g_context->inter->setUV(g_context, vertexId, currVertex.u, currVertex.v);
-			g_context->inter->setNormal(g_context, vertexId, currVertex.nx, currVertex.ny, currVertex.nz);
+			if (g_context->inter->setPosition)
+				g_context->inter->setPosition(g_context, vertexId, currVertex.x, currVertex.y, currVertex.z);
+			if (g_context->inter->setUV)
+				g_context->inter->setUV(g_context, vertexId, currVertex.u, currVertex.v);
+			if (g_context->inter->setNormal) 
+  			g_context->inter->setNormal(g_context, vertexId, currVertex.nx, currVertex.ny, currVertex.nz);
 
 			for (l = 0; l < pMesh->GetElementVertexColorCount(); l++)
 			{

@@ -36,5 +36,8 @@
     <ClInclude Include="string_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="math_utils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
