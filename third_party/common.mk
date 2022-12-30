@@ -85,6 +85,10 @@ endef
 %.o: %.tim
 	$(call OBJCOPYME)
 
+# convert VAG file to bin
+%.o: %.vag
+	$(call OBJCOPYME)
+
 # A bit broken, but that'll do in most cases.
 %.dep: %.s
 	touch $@
