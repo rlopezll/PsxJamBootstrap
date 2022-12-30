@@ -6,5 +6,5 @@
 *.bin
 *.cue
 *.exe
-cdrom\audio\*
-data\*
+cdrom/audio/*
+*.vag
