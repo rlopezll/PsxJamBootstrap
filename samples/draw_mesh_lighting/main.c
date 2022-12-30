@@ -14,7 +14,6 @@
 #include "dcMemory.h"
 
 #include "Teapot001.h"
-#include "Box001.h"
 
 extern unsigned long _binary_smile_tim_start[];
 
@@ -24,7 +23,7 @@ int main(void)
 
     SDC_Render render;
     SDC_Camera camera;
-    long distanceY = -300;
+    long distanceY = 200;
     long distanceZ = 300;
     int  width = 640;
     int  height = 240;
@@ -39,26 +38,43 @@ int main(void)
     dcRender_LoadTexture(&tim_smile, _binary_smile_tim_start);  
 
     SVECTOR rotation = {0};
-    VECTOR translationTeapot = {150, 0, 0, 0}; 
-    VECTOR translationCube = {-150, 0, 0, 0}; 
+    VECTOR translationTeapot = {0, 0, 0, 0}; 
     MATRIX transform;
 
-    SDC_DrawParams draw_params;
-    draw_params.tim = &tim_smile;
+    SDC_DrawParams draw_params_teapot = {
+        .tim = NULL,
+        .constantColor = {255, 255, 0},
+        .bLighting = 1,
+        .bUseConstantColor = 1
+    };
+
+    SDC_DrawParams draw_params_cube = {
+        .tim = &tim_smile,
+        .constantColor = {255, 255, 255},
+        .bLighting = 1,
+        .bUseConstantColor = 0
+    };
+
+    CVECTOR ambientColor = {0, 0, 0};
+    dcRender_SetAmbientColor(&render, &ambientColor );
+
+    SVECTOR lightDir = {DC_ONE, 0, 0 };
+    SVECTOR lightColor = {DC_ONE, DC_ONE, DC_ONE};
+    dcRender_SetLight(&render, 0, &lightDir, &lightColor);
+
+    SVECTOR lightDir1 = {0, -DC_ONE, 0 };
+    SVECTOR lightColor1 = {DC_ONE/2, DC_ONE/2, DC_ONE/2};
+    dcRender_SetLight(&render, 1, &lightDir1, &lightColor1);
+
     while (1) {
         rotation.vy += 16; 
 
         RotMatrix(&rotation, &transform);
-        TransMatrix(&transform, &translationCube);
-        dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, &draw_params);  
-
-        RotMatrix(&rotation, &transform);
         TransMatrix(&transform, &translationTeapot);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, &draw_params);  
+        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, &draw_params_cube);  
 
-        FntPrint("GameDev Challenge Texture Demo\n");
+        FntPrint("GameDev Challenge Lighting Demo\n");
         dcRender_SwapBuffers(&render);  
     }
 

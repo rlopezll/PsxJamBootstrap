@@ -1,0 +1,1 @@
+BMP2TIM.exe sonic.bmp sonic.tim 4 -org=320,0 -clut=0,480 -mpink

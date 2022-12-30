@@ -30,7 +30,7 @@ ARCHFLAGS += -fno-stack-protector -nostdlib -ffreestanding
 ifeq ($(USE_FUNCTION_SECTIONS),true)
 CPPFLAGS += -ffunction-sections
 endif
-CPPFLAGS += -mno-gpopt -fomit-frame-pointer
+CPPFLAGS += -mno-gpopt -fomit-frame-pointer -Wno-missing-braces
 CPPFLAGS += -fno-builtin -fno-strict-aliasing -Wno-attributes
 CPPFLAGS += $(ARCHFLAGS)
 CPPFLAGS += -I$(ROOTDIR)

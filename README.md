@@ -19,6 +19,8 @@ This repo is mostly based on [VSCodePSX repo](https://github.com/NDR008/VSCodePS
 - **BMP2TIM**: Conversor from BMP format to TIM (psx texture format). tools\BMP2TIM\BMP2TIM.exe (see draw_mesh_textured sample)
   Example: BMP2TIM.exe smile.bmp smile.tim 4 -org=640,0 -clut=0,480
 
+## Samples
+* [Samples page](https://github.com/rlopezll/PsxJamBootstrap/tree/main/samples)
 
 ## Debugging
 

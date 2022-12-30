@@ -45,7 +45,7 @@ int main(void)
 
         FntPrint("GameDev Challenge Teapot Demo\n");
 
-        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL, NULL);  
+        dcRender_DrawMesh(&render, &Teapot001_Mesh, &transform, NULL);  
 
         dcRender_SwapBuffers(&render);  
     }

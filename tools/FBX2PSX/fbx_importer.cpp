@@ -9,6 +9,9 @@
 #include "string_utils.h"
 #include <functional>
 
+const Vector3f Vector3f::Zero = { 0.0f, 0.0f, 0.0f };
+const Vector3f Vector3f::One = { 1.0f, 1.0f, 1.0f };
+
 struct Vector3 {
   short x,y,z;
   void Set(float _x, float _y, float _z) {
@@ -32,15 +35,6 @@ struct Vector2 {
 	}
 };
 
-struct Matrix44 {
-  float v[16];
-  void SetIdentity()
-  {
-
-  }
-};
-
-
 struct TMesh {
 
 	enum TVertexType {
@@ -48,6 +42,7 @@ struct TMesh {
 		VERTEX_POSITION_UV,
 		VERTEX_POSITION_NORMAL,
 		VERTEX_POSITION_NORMAL_UV,
+		VERTEX_POSITION_NORMAL_COLOR,
 		VERTEX_POSITION_COLOR,
 		VERTEX_POSITION_COLOR_UV
 	};
@@ -67,9 +62,9 @@ struct TMesh {
 	struct TVertexPosColor : public TVertex {
 		Vector3 color;
 		void init() {
-			color.x = 255.0f;
-			color.y = 255.0f;
-			color.z = 255.0f;
+			color.x = 255;
+			color.y = 255;
+			color.z = 255;
     }
 	};
 
@@ -95,6 +90,14 @@ struct TMesh {
 		}
 	};
 
+	struct TVertexPosNormalColor : public TVertexPosColor {
+		Vector3 normal;
+		void init() {
+			memset(this, 0x0, sizeof(TVertexPosNormal));
+			TVertexPosColor::init();
+		}
+	};
+
 	struct TVertexPosNormalUV : public TVertex {
 		Vector3 normal;
 		Vector2 uv;
@@ -109,7 +112,7 @@ struct TMesh {
 	std::vector<int>     indices;
 	TVertexType          vertex_type;
 	size_t               nbytes_per_vertex;
-  Matrix44             mtx;
+  Matrix44             fbxMtx;
 	unsigned int         nframes;
 	TTransform*          transforms;
 	std::vector<SVertexInfo> all_vertices; //used to search unique vertexs
@@ -124,7 +127,7 @@ struct TMesh {
   }
 
 	bool hasColor() const {
-		return vertex_type == VERTEX_POSITION_COLOR || vertex_type == VERTEX_POSITION_COLOR_UV;
+		return vertex_type == VERTEX_POSITION_COLOR || vertex_type == VERTEX_POSITION_COLOR_UV || vertex_type == VERTEX_POSITION_NORMAL_COLOR;
 	}
 
 	bool hasUVs() const {
@@ -132,7 +135,7 @@ struct TMesh {
 	}
 
 	bool hasNormals() const {
-		return vertex_type == VERTEX_POSITION_NORMAL || vertex_type == VERTEX_POSITION_NORMAL_UV;
+		return vertex_type == VERTEX_POSITION_NORMAL || vertex_type == VERTEX_POSITION_NORMAL_UV || vertex_type == VERTEX_POSITION_NORMAL_COLOR;
 	}
 };
 
@@ -171,6 +174,9 @@ void setNumVertices(TImporterContext *context, int nvertices) {
   else if (sub_mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL_UV) {
     sub_mesh.vertices = new TMesh::TVertexPosNormalUV[nvertices];
   }
+	else if (sub_mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL_COLOR) {
+		sub_mesh.vertices = new TMesh::TVertexPosNormalColor[nvertices];
+	}
 	else if (sub_mesh.vertex_type == TMesh::VERTEX_POSITION_COLOR) {
 		sub_mesh.vertices = new TMesh::TVertexPosColor[nvertices];
 	}
@@ -184,7 +190,7 @@ void addMesh(TImporterContext *context, const char *name, float *mtx) {
 	TMesh* mesh = importer->addMesh();
   assert(mesh);
   mesh->name = name;
-  memcpy(&mesh->mtx.v[0], mtx, sizeof(Matrix44));
+  memcpy(&mesh->fbxMtx.v[0], mtx, sizeof(Matrix44));
 }
 
 void setFormatVertex(TImporterContext *context, bool has_uvs, bool has_color, bool has_normals, bool has_tangents, bool has_binormals) {
@@ -212,6 +218,24 @@ void setFormatVertex(TImporterContext *context, bool has_uvs, bool has_color, bo
 			nbytes_per_vertex = sizeof(TMesh::TVertexPosColorUV);
 			break;
 		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL:
+		{
+			vertex_type = TMesh::VERTEX_POSITION_NORMAL;
+			nbytes_per_vertex = sizeof(TMesh::TVertexPosNormal);
+			break;
+		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL_COLOR:
+		{
+			vertex_type = TMesh::VERTEX_POSITION_NORMAL_COLOR;
+			nbytes_per_vertex = sizeof(TMesh::TVertexPosNormalColor);
+			break;
+		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL_UV:
+		{
+			vertex_type = TMesh::VERTEX_POSITION_NORMAL_UV;
+			nbytes_per_vertex = sizeof(TMesh::TVertexPosNormalUV);
+			break;
+		}
 	}
   mesh->vertex_type = vertex_type;
   mesh->nbytes_per_vertex = nbytes_per_vertex;
@@ -228,6 +252,12 @@ int getVertexIndex(TImporterContext* context, const SVertexInfo &vertex) {
 	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_COLOR_UV || importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_UV) {
 		compareFunc = SVertexInfo::compareVertexUVs;
 	}
+	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL || importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL_COLOR) {
+		compareFunc = SVertexInfo::compareVertexNormals;
+	}
+	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL_UV) {
+		compareFunc = SVertexInfo::compareVertexUVsNormals;
+	}
 	for (int idx = 0; idx < mesh->all_vertices.size(); ++idx)
 	{
 		if (compareFunc(vertex, mesh->all_vertices[idx])) 
@@ -235,7 +265,7 @@ int getVertexIndex(TImporterContext* context, const SVertexInfo &vertex) {
 	}
 	//Add New Vertex
 	mesh->all_vertices.push_back(vertex);
-	return mesh->all_vertices.size()-1;
+	return (int)mesh->all_vertices.size()-1;
 }
      
 void setPosition(TImporterContext *context, int idx, float x, float y, float z) {
@@ -244,8 +274,12 @@ void setPosition(TImporterContext *context, int idx, float x, float y, float z) 
 	assert(mesh);
   char *base = (char *)mesh->vertices;
   char *curr = base + mesh->nbytes_per_vertex * idx;
+	Vector3f fbxPosition;
+	fbxPosition.Set(x, y, z);
+	fbxPosition = importer->m_params.m_matrix * fbxPosition;
+	fbxPosition = mesh->fbxMtx * fbxPosition;
   TMesh::TVertex *vtx = (TMesh::TVertex *)curr;
-  vtx->pos.Set(importer->m_params.m_scalarVector[0] * x, importer->m_params.m_scalarVector[1] * y, importer->m_params.m_scalarVector[2] * z);
+  vtx->pos.Set(fbxPosition.x, fbxPosition.y, fbxPosition.z);
   mesh->indices.push_back(idx);
   mesh->nvertices = std::max(mesh->nvertices, (unsigned int)idx+1);
 }
@@ -258,8 +292,24 @@ void setNormal(TImporterContext *context, int idx, float x, float y, float z) {
 
 	char* base = (char*)mesh->vertices;
 	char* curr = base + mesh->nbytes_per_vertex * idx;
-	TMesh::TVertexPosNormal* vtx = (TMesh::TVertexPosNormal*)curr;
-	vtx->normal.Set(x, y, z);
+	x *= 4096;
+	y *= -4096;
+	z *= 4096;
+	if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL) 
+	{
+		TMesh::TVertexPosNormal* vtx = (TMesh::TVertexPosNormal*)curr;
+		vtx->normal.Set(x, y, z);
+	}
+	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL_COLOR)
+	{
+		TMesh::TVertexPosNormalColor* vtx = (TMesh::TVertexPosNormalColor*)curr;
+		vtx->normal.Set(x, y, z);
+	}
+	else if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL_UV)
+	{
+		TMesh::TVertexPosNormalUV* vtx = (TMesh::TVertexPosNormalUV*)curr;
+		vtx->normal.Set(x, y, z);
+	}
 }
 void setUV(TImporterContext *context, int idx, float u, float v) {
   TImporter *importer = static_cast<TImporter *>(context->user_data);
@@ -298,7 +348,7 @@ void setUV(TImporterContext *context, int idx, float u, float v) {
 		TMesh::TVertexPosNormalUV* vtx = (TMesh::TVertexPosNormalUV*)curr;
 		vtx->uv.Set(u_normalized, v_normalized);
 	}
-  else {
+	else {
     TMesh::TVertexPosColorUV *vtx = (TMesh::TVertexPosColorUV*)curr;
 		vtx->uv.Set(u_normalized, v_normalized);
   }
@@ -361,28 +411,40 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 				fprintf(f, "\n");
 		}
 	}
-	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL) { // TODO
-		//fprintf(f, "static SDC_Vertex %s_Vertices[] = {\n", mesh.name.c_str());
-		//const TMesh::TVertexPosNormal* vertices = (const TMesh::TVertexPosNormal*)mesh.vertices;
-		//for (int idx = 0; idx < mesh.nvertices; ++idx) {
-		//	fprintf(f, "    { %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z);
-		//	if (idx < mesh.nvertices - 1)
-		//		fprintf(f, ",\n");
-		//	else
-		//		fprintf(f, "\n");
-		//}
+	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL) {
+		fprintf(f, "static SDC_VertexNormal %s_Vertices[] = {\n", mesh.name.c_str());
+		const TMesh::TVertexPosNormal* vertices = (const TMesh::TVertexPosNormal*)mesh.vertices;
+		for (int idx = 0; idx < mesh.nvertices; ++idx) {
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0 }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].normal.x, vertices[idx].normal.y, vertices[idx].normal.z);
+			if (idx < mesh.nvertices - 1)
+				fprintf(f, ",\n");
+			else
+				fprintf(f, "\n");
+		}
 	}
-	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL_UV) { // TODO
-		//fprintf(f, "static SDC_VertexColor %s_Vertices[] = {\n", mesh.name.c_str());
-		//const TMesh::TVertexPosNormalUV* vertices = (const TMesh::TVertexPosNormalUV*)mesh.vertices;
-  //  srand(0);    
-		//for (int idx = 0; idx < mesh.nvertices; ++idx) {
-		//	fprintf(f, "    { %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].uv.x, vertices[idx].uv.y);
-		//	if (idx < mesh.nvertices - 1)
-		//		fprintf(f, ",\n");
-		//	else
-		//		fprintf(f, "\n");
-		//}
+	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL_UV) { 
+		fprintf(f, "static SDC_VertexTexturedNormal %s_Vertices[] = {\n", mesh.name.c_str());
+		const TMesh::TVertexPosNormalUV* vertices = (const TMesh::TVertexPosNormalUV*)mesh.vertices;
+		srand(0);
+		for (int idx = 0; idx < mesh.nvertices; ++idx) {
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].normal.x, vertices[idx].normal.y, vertices[idx].normal.z, vertices[idx].uv.x, vertices[idx].uv.y);
+			if (idx < mesh.nvertices - 1)
+				fprintf(f, ",\n");
+			else
+				fprintf(f, "\n");
+		}
+	}
+	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_NORMAL_COLOR) {
+		fprintf(f, "static SDC_VertexColorNormal %s_Vertices[] = {\n", mesh.name.c_str());
+		const TMesh::TVertexPosNormalColor* vertices = (const TMesh::TVertexPosNormalColor*)mesh.vertices;
+		srand(0);
+		for (int idx = 0; idx < mesh.nvertices; ++idx) {
+			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0, %d, %d, %d, 0 }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].normal.x, vertices[idx].normal.y, vertices[idx].normal.z, rand() % 255, rand() % 255, rand() % 255);
+			if (idx < mesh.nvertices - 1)
+				fprintf(f, ",\n");
+			else
+				fprintf(f, "\n");
+		}
 	}
 	else if (mesh.vertex_type == TMesh::VERTEX_POSITION_UV) {
 		fprintf(f, "static SDC_VertexTextured %s_Vertices[] = {\n", mesh.name.c_str());
@@ -401,7 +463,6 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		srand(0);
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
 			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0 }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255);
-			//fprintf(f, "    { %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].color.x, vertices[idx].color.y, vertices[idx].color.z);
 			if (idx < mesh.nvertices - 1)
 				fprintf(f, ",\n");
 			else
@@ -414,7 +475,6 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		srand(0);
 		for (int idx = 0; idx < mesh.nvertices; ++idx) {
 			fprintf(f, "    { %d, %d, %d, 0, %d, %d, %d, 0, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, rand() % 255, rand() % 255, rand() % 255, vertices[idx].uv.x, vertices[idx].uv.y);
-			//fprintf(f, "    { %d, %d, %d, %d, %d, %d, %d, %d }", vertices[idx].pos.x, vertices[idx].pos.y, vertices[idx].pos.z, vertices[idx].color.x, vertices[idx].color.y, vertices[idx].color.z, vertices[idx].uv.x, vertices[idx].uv.y);
 			if (idx < mesh.nvertices - 1)
 				fprintf(f, ",\n");
 			else
@@ -427,11 +487,11 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
   constexpr int indexs_by_line = 32;
 	int nindices = mesh.indices.size();
   //swap indices to psx format
-	//for (int idx = 0; idx < nindices; idx+=3) {
- //   int prev_idx = mesh.indices[idx + 1];
-	//	mesh.indices[idx + 1] = mesh.indices[idx + 2];
-	//	mesh.indices[idx + 2] = prev_idx;
- // }
+	for (int idx = 0; idx < nindices; idx += 3) {
+		int prev_idx = mesh.indices[idx + 1];
+		mesh.indices[idx + 1] = mesh.indices[idx + 2];
+		mesh.indices[idx + 2] = prev_idx;
+	}
 	for (int idx = 0; idx < nindices; ++idx) {
 	  fprintf(f, "%d", mesh.indices[idx]);
     if (idx < nindices-1)
@@ -459,6 +519,21 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 		case TImportParams::EVertexFormatOutput::VERTEX_UV:
 		{
 			vertex_type_str = "POLIGON_VERTEX_TEXTURED";
+			break;
+		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL:
+		{
+			vertex_type_str = "POLIGON_VERTEX_NORMAL";
+			break;
+		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL_COLOR:
+		{
+			vertex_type_str = "POLIGON_VERTEX_COLOR_NORMAL";
+			break;
+		}
+		case TImportParams::EVertexFormatOutput::VERTEX_NORMAL_UV:
+		{
+			vertex_type_str = "POLIGON_VERTEX_TEXTURED_NORMAL";
 			break;
 		}
 	}

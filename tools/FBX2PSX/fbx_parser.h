@@ -21,6 +21,12 @@ struct SVertexInfo {
 	static bool compareVertexUVs(const SVertexInfo& v1, const SVertexInfo& v2) {
 		return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z && v1.u == v2.u && v1.v == v2.v;
 	}
+	static bool compareVertexUVsNormals(const SVertexInfo& v1, const SVertexInfo& v2) {
+		return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z && v1.nx == v2.nx && v1.ny == v2.ny && v1.nz == v2.nz && v1.u == v2.u && v1.v == v2.v;
+	}
+	static bool compareVertexNormals(const SVertexInfo& v1, const SVertexInfo& v2) {
+		return v1.x == v2.x && v1.y == v2.y && v1.z == v2.z && v1.nx == v2.nx && v1.ny == v2.ny && v1.nz == v2.nz;
+	}
 };
 
 typedef struct TImporterContext TImporterContext;

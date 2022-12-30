@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "MAIN.C": "cpp",
+        "dcrender.h": "c"
+    }
+}

@@ -14,3 +14,13 @@ Draw a teapot, imported from FBX using the tool FBX2PSX.
 Draw a box and teapot with texture, this sample use FBX2PSX tool (import FBX to .h) and BMP2TIM (to import BMP to TIM psx texture format).
 
 <img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_mesh_textured.JPG?raw=true" width="75%" height="75%">
+
+## draw_sprites
+Draw a animated sprite.
+
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_sprites.JPG?raw=true" width="75%" height="75%">
+
+## draw_mesh_lighting
+Draw a mesh with illumination.
+
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_mesh_lighting.JPG?raw=true" width="75%" height="75%">
