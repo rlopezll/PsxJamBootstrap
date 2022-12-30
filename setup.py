@@ -66,4 +66,9 @@ psyq = Download("https://psx.arthus.net/sdk/Psy-Q/psyq-4.7-converted-full.7z")
 Unzip(psyq, "third_party/psyq")
 os.system("rm " + psyq)
 
+# ffmpeg
+ffmpeg = Download("https://gamedevchallenge.000webhostapp.com/downloads/ffmpeg-2022-12-29-git-d39b34123d-full_build.7z")
+Unzip(ffmpeg, "tools")
+os.rename("tools/ffmpeg-2022-12-29-git-d39b34123d-full_build", "tools/ffmpeg")
+os.system("rm " + ffmpeg)
 
