@@ -19,3 +19,8 @@ Draw a box and teapot with texture, this sample use FBX2PSX tool (import FBX to 
 Draw a animated sprite.
 
 <img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_sprites.JPG?raw=true" width="75%" height="75%">
+
+## draw_mesh_lighting
+Draw a mesh with illumination.
+
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_mesh_lighting.JPG?raw=true" width="75%" height="75%">
