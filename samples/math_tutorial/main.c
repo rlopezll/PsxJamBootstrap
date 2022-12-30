@@ -49,7 +49,7 @@ int main(void)
     SDC_Render render;
     SDC_Camera camera;
     long distance = 800;
-    long cameraHeight = 400;
+    long cameraHeight = 600;
     int  width = 640;
     int  height = 240;
 
@@ -173,8 +173,16 @@ int main(void)
 
         FntPrint("GameDev Challenge Math Demo\n");
 
+        // Draw the axis
         dcMisc_DrawAxis(&render, &camera);
+        
+        // Draw the cube
         dcRender_DrawMesh(&render, &cubeMesh, &MVP, &drawParams );
+        
+        // Draw a line along the cube's movement direction
+        SVECTOR cubeCenter = {0};
+        SVECTOR frontPoint = {0, 0, CUBESIZE << 2};
+        dcRender_DrawLine(&render, &cubeCenter, &frontPoint, &MVP, &drawParams.constantColor, 4 );
 
         dcRender_SwapBuffers(&render);
     }

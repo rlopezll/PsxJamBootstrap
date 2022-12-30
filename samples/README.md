@@ -24,3 +24,10 @@ Draw a animated sprite.
 Draw a mesh with illumination.
 
 <img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/draw_mesh_lighting.JPG?raw=true" width="75%" height="75%">
+
+## math_tutorial
+Move a box with a simple third-person controller, verboselly commented code to explain fixed point math.
+
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/math_tutorial.JPG?raw=true" width="75%" height="75%">
+
+
