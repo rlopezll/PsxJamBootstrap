@@ -1,0 +1,10 @@
+*.dep
+*.o
+*.elf
+*.ps-exe
+*.map
+*.bin
+*.cue
+*.exe
+cdrom\audio\*
+data\*
