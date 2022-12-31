@@ -30,4 +30,11 @@ Move a box with a simple third-person controller, verboselly commented code to e
 
 <img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/math_tutorial.JPG?raw=true" width="75%" height="75%">
 
+## audio_music
+Demo to play sfx and music.
+- convert_audios.bat: used to convert mp3 and wav file to psx formats
+- do_cdrom.bat: to generate a .bin file
+NOTE: we need a cdrom(bin) file because the music is embedded into CDROM image (like a audio tracks inside cd), in the emu the music not works. (only music, sfxs files works well in the emu)
+
+
 
