@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "ms-vscode.cpptools",
+        "spmeesseman.vscode-taskexplorer",
+        "GitHub.vscode-pull-request-github",
+        "webfreak.debug"
+    ]
+}
