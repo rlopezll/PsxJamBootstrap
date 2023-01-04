@@ -1,0 +1,1 @@
+..\..\tools\BMP2TIM\BMP2TIM.exe meshes\FType_PSX.bmp meshes\FType_PSX.tim 8 -clut=0,480 -org=640,0
