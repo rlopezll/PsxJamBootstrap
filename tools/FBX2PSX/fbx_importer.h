@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
-#include "math_utils.h"
+#include <fbxsdk.h>
+#include <fbxsdk/core/math/fbxaffinematrix.h>
+#include <fbxsdk/core/arch/fbxtypes.h>
 
 struct TImportParams {
   enum class EVertexFormatOutput {
@@ -25,7 +27,7 @@ struct TImportParams {
   int         m_textureSize[2] = {32, 32};
   EVertexFormatOutput m_vertexFormatOutput = EVertexFormatOutput::VERTEX;
   int         m_flipUVFlags = (int)EFlipUVFlag::VERTICAL_FLIP;
-	Matrix44    m_matrix;
+	FbxAMatrix  m_matrix;
 
   std::string getRelativeFolder(const std::string &folder) const;
   std::string getAbsoluteFolder(const std::string &folder) const;

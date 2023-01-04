@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string.h>
+#include <fbxsdk.h>
+#include <fbxsdk/core/math/fbxaffinematrix.h>
 
 enum ResultParserFBX {
   OK,
@@ -35,7 +37,7 @@ typedef struct {
 
   int  (*getVertexIndex)(TImporterContext* context, const SVertexInfo& vertex);
   void (*setNumVertices)(TImporterContext *context, int nvertices);
-  void (*addMesh)(TImporterContext *context, const char *name, float *mtx);
+  void (*addMesh)(TImporterContext *context, const char *name, FbxAMatrix &mtx);
   void (*setFormatVertex)(TImporterContext *context, bool has_uvs, bool has_color, bool has_normals, bool has_tangents, bool has_binormals);
 
   void (*setPosition)(TImporterContext *context, int idx, float x, float y, float z);
@@ -52,7 +54,7 @@ typedef struct {
 
   void (*addMeshAttribute)(TImporterContext *context, const char *path, const char *value);
   void (*addMaterialAttribute)(TImporterContext *context, const char *material_path, const char *value);
-  void (*addEntity)(TImporterContext *context, const char *name, float *mtx);
+  void (*addEntity)(TImporterContext *context, const char *name, FbxAMatrix &mtx);
 
 } SFBXParserInterface;
 

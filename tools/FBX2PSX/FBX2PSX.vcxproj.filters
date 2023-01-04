@@ -22,6 +22,9 @@
     <ClCompile Include="string_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="fbx_helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fbx_importer.h">
@@ -36,7 +39,7 @@
     <ClInclude Include="string_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="math_utils.h">
+    <ClInclude Include="fbx_helpers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

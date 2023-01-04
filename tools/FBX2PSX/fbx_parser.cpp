@@ -4,16 +4,16 @@
 #include <cassert>
 #include <vector>
 #include <set>
-#include "fbxsdk.h"
+#include <fbxsdk.h>
+#include "fbx_helpers.h"
 
 #define IOS_CUSTOM_REF (*pManager->GetIOSettings())
 
 void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene);
 void DestroySdkObjects(FbxManager* pManager, bool pExitStatus);
 bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename);
-ResultParserFBX processNode(FbxNode* node, bool is_root);
+ResultParserFBX processNode(FbxNode* node, FbxAMatrix& pParentGlobalPosition, bool is_root);
 ResultParserFBX processMesh(FbxMesh* pMesh);
-FbxAMatrix GetGlobalDefaultPosition(FbxNode* pNode);
 
 TImporterContext *g_context = nullptr;
 
@@ -34,7 +34,8 @@ ResultParserFBX parserFBX(const char *filename, TImporterContext *context)
   {
     //get root node of the fbx scene
     FbxNode* lRootNode = lScene->GetRootNode();
-    ResultParserFBX res = processNode(lRootNode, true);
+		FbxAMatrix lDummyGlobalPosition;
+		ResultParserFBX res = processNode(lRootNode, lDummyGlobalPosition, true);
 
     /*FbxAnimStack *anim_stack = lScene->GetCurrentAnimationStack();
     if (anim_stack) {
@@ -209,99 +210,36 @@ bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename)
   return lStatus;
 }
 
-// Recursive function to get a node's global default position.
-// As a prerequisite, parent node's default local position must be already set.
-FbxAMatrix GetGlobalDefaultPosition(FbxNode* pNode)
-{
-  FbxAMatrix lLocalPosition;
-  FbxAMatrix lGlobalPosition;
-  FbxAMatrix lParentGlobalPosition;
-
-  lLocalPosition.SetT(pNode->LclTranslation.Get());
-  FbxDouble3 Rotation = pNode->LclRotation.Get();
-  FbxDouble aux = -Rotation.mData[1];
-	Rotation.mData[1] = Rotation.mData[2];
-	Rotation.mData[2] = aux;
-  lLocalPosition.SetR(Rotation);
-  lLocalPosition.SetS(pNode->LclScaling.Get());
-
-  if (pNode->GetParent())
-  {
-    lParentGlobalPosition = GetGlobalDefaultPosition(pNode->GetParent());
-    lGlobalPosition = lParentGlobalPosition * lLocalPosition;
-  }
-  else
-  {
-    lGlobalPosition = lLocalPosition;
-  }
-
-  return lGlobalPosition;
-}
-
-ResultParserFBX processNode(FbxNode* node, bool is_root_node) {
+ResultParserFBX processNode(FbxNode* node, FbxAMatrix& pParentGlobalPosition, bool is_root_node) {
   ResultParserFBX ret = OK;
   const char *name = node->GetName();
-  FbxAMatrix matrix = GetGlobalDefaultPosition(node);
-  float mtx[16];
-  FbxDouble *values = &matrix.mData[0].mData[0];
-  for (size_t i = 0; i < 16; ++i) {
-    mtx[i] = static_cast<float>(values[i]);
-  }
+	FbxAMatrix lGlobalPosition = GetGlobalPosition(node, 0, 0, &pParentGlobalPosition);
+  FbxAMatrix* currMtx = &lGlobalPosition;
+	if (node->GetNodeAttribute())
+	{
+		// Geometry offset.
+		// it is not inherited by the children.
+		FbxAMatrix lGeometryOffset = GetGeometry(node);
+		FbxAMatrix lGlobalOffPosition = lGlobalPosition * lGeometryOffset;
+    currMtx = &lGlobalOffPosition;
+	}
   bool processed = false;
-
   if (g_context->inter->addEntity && !is_root_node) {
-    g_context->inter->addEntity(g_context, name, mtx);
+    g_context->inter->addEntity(g_context, name, *currMtx);
   }
-  FbxVector4 node_pre_rotation_euler = node->GetPreRotation(FbxNode::eSourcePivot);
-
   if (node->GetMesh()) {
     if (g_context->inter->addMesh) {
-      g_context->inter->addMesh(g_context, name, mtx);
+      g_context->inter->addMesh(g_context, name, *currMtx);
     }
     FbxMesh *mesh = node->GetMesh();
-    //FbxQuaternion q;
-    //q.SetAxisAngle(FbxVector4(1.0f, 0.0f, 0.0f, 0.0f), -90.0f);
-    FbxAMatrix rot_mtx;
-    rot_mtx.SetTRS(FbxVector4(0.0f, 0.0f, 0.0f, 0.0f), node_pre_rotation_euler, FbxVector4(1.0f, 1.0f, 1.0f, 1.0f));
-    //rot_mtx.SetTQS(FbxVector4(0.0f, 0.0f, 0.0f, 0.0f), q, FbxVector4(1.0f, 1.0f, 1.0f, 1.0f));
-    mesh->SetPivot(rot_mtx);
-    mesh->ApplyPivot();
     ret = processMesh(mesh);
     processed = true;
   }
 
-  /*
-  if (processed) {
-    int material_count = node->GetMaterialCount();
-    for (int lCount = 0; lCount < material_count; lCount++)
-    {
-      const FbxSurfaceMaterial *lMaterial = node->GetMaterial(lCount);
-      //FbxProperty lFbxProp = lMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
-      FbxProperty lFbxProp = lMaterial->GetFirstProperty();
-      while (lFbxProp.IsValid())
-      {
-        if (lFbxProp.GetSrcObjectCount<FbxTexture>() > 0)
-        {
-          for (int j = 0; j<lFbxProp.GetSrcObjectCount<FbxFileTexture>(); ++j)
-          {
-            const FbxFileTexture *lTex = lFbxProp.GetSrcObject<FbxFileTexture>(j);
-            const char *filename = lTex->GetFileName();
-            if (g_context->inter->setTexture) {
-              FbxString prop_name = lFbxProp.GetName();
-              g_context->inter->setTexture(g_context, filename, prop_name.Buffer());
-            }
-          }
-        }
-        lFbxProp = lMaterial->GetNextProperty(lFbxProp);
-      }
-    }
-  }
-  */
-
   int childCount = node->GetChildCount();
   for (int i = 0; i < childCount; ++i) {
     FbxNode *node_child = node->GetChild(i);
-    ret = processNode(node_child, false);
+    ret = processNode(node_child, lGlobalPosition, false);
     if (ret != ResultParserFBX::OK)
       return ret;
   }

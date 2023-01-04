@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <fbxsdk.h>
 #include "file_utils.h"
 #include "string_utils.h"
 #include "fbx_importer.h"
@@ -87,7 +88,6 @@ int main(int argc, char** argv)
 		printf("    5: VERTEX_NORMAL_COLOR\n");
 		printf("    6: VERTEX_NORMAL_UV\n");
 		printf("-texture_size <x,y>\n");
-		printf("-invertY <0/1> OPTIONAL default:0\n");
 		printf("-scale   <value> OPTIONAL default:1\n");
 		printf("-yaw     <value in degrees> OPTIONAL default:0\n");
 		printf("-pitch   <value in degrees> OPTIONAL default:0\n");
@@ -104,7 +104,6 @@ int main(int argc, char** argv)
 	float yaw = 0.0f;
 	float pitch = 0.0f;
 	float roll = 0.0f;
-	Vector3f scale = Vector3f::One;
 	int oVertexFormat = (int)TImportParams::EVertexFormatOutput::VERTEX;
 	TImportParams params;
 	if (!args_parser.GetStringArg("-fbx", fbx_filename)) {
@@ -139,16 +138,8 @@ int main(int argc, char** argv)
 	if (args_parser.GetIntArg("-vertex_format", oVertexFormat)) {
 		params.m_vertexFormatOutput = (TImportParams::EVertexFormatOutput)oVertexFormat;
 	}
-	args_parser.GetBoolArg("-invertY", bInvertyY);
-	if (bInvertyY) {
-		scale.y = -1.0f;
-	}
 	float scaleValue = 1.0f;
-	if (args_parser.GetFloatArg("-scale", scaleValue)) {
-		scale.x *= scaleValue;
-		scale.y *= scaleValue;
-		scale.z *= scaleValue;
-	}
+	args_parser.GetFloatArg("-scale", scaleValue);
 	if (args_parser.GetFloatArg("-yaw", yaw)) {
 		yaw = DEG2RAD(yaw);
 	}
@@ -158,9 +149,9 @@ int main(int argc, char** argv)
 	if (args_parser.GetFloatArg("-roll", roll)) {
 		roll = DEG2RAD(roll);
 	}
-	Matrix44 rotationMatrix, scaleMatrix;
-	rotationMatrix.SetYawPitchRoll(yaw, pitch, roll);
-	scaleMatrix.SetScale(scale);
+	FbxAMatrix rotationMatrix, scaleMatrix;
+	rotationMatrix.SetROnly(FbxVector4(roll, pitch, yaw, 1.0f));
+	scaleMatrix.SetS(FbxVector4(scaleValue, scaleValue, scaleValue, 1.0f));
 	params.m_matrix = rotationMatrix * scaleMatrix;
 	params.refreshAbsolutePaths();
 	importMeshFromFBX(fbx_filename.c_str(), params);

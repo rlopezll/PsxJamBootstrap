@@ -8,9 +8,7 @@
 #include "file_utils.h"
 #include "string_utils.h"
 #include <functional>
-
-const Vector3f Vector3f::Zero = { 0.0f, 0.0f, 0.0f };
-const Vector3f Vector3f::One = { 1.0f, 1.0f, 1.0f };
+#include <fbxsdk/core/math/fbxaffinematrix.h>
 
 struct Vector3 {
   short x,y,z;
@@ -49,7 +47,7 @@ struct TMesh {
 
 	struct TTransform {
 		float time;
-    Matrix44 mtx;
+		FbxAMatrix mtx;
 	};
 
 	struct TVertex {
@@ -108,11 +106,11 @@ struct TMesh {
 
 	std::string          name;
 	void*                vertices;
-	unsigned int         nvertices;
+	int									 nvertices;
 	std::vector<int>     indices;
 	TVertexType          vertex_type;
 	size_t               nbytes_per_vertex;
-  Matrix44             fbxMtx;
+	FbxAMatrix           fbxMtx;
 	unsigned int         nframes;
 	TTransform*          transforms;
 	std::vector<SVertexInfo> all_vertices; //used to search unique vertexs
@@ -185,12 +183,12 @@ void setNumVertices(TImporterContext *context, int nvertices) {
 	}
 }
 
-void addMesh(TImporterContext *context, const char *name, float *mtx) {
+void addMesh(TImporterContext *context, const char *name, FbxAMatrix &mtx) {
   TImporter *importer = static_cast<TImporter *>(context->user_data);
 	TMesh* mesh = importer->addMesh();
   assert(mesh);
   mesh->name = name;
-  memcpy(&mesh->fbxMtx.v[0], mtx, sizeof(Matrix44));
+	mesh->fbxMtx = mtx;
 }
 
 void setFormatVertex(TImporterContext *context, bool has_uvs, bool has_color, bool has_normals, bool has_tangents, bool has_binormals) {
@@ -274,14 +272,17 @@ void setPosition(TImporterContext *context, int idx, float x, float y, float z) 
 	assert(mesh);
   char *base = (char *)mesh->vertices;
   char *curr = base + mesh->nbytes_per_vertex * idx;
-	Vector3f fbxPosition;
-	fbxPosition.Set(x, y, z);
-	fbxPosition = importer->m_params.m_matrix * fbxPosition;
-	fbxPosition = mesh->fbxMtx * fbxPosition;
+
+	FbxAMatrix locMtx;
+	FbxVector4 fbxPosition(x, y, z, 1.0f);
+	locMtx.SetT(fbxPosition);
+	locMtx = mesh->fbxMtx * locMtx;
+	locMtx = importer->m_params.m_matrix * locMtx;
+	fbxPosition = locMtx.GetT();
   TMesh::TVertex *vtx = (TMesh::TVertex *)curr;
-  vtx->pos.Set(fbxPosition.x, fbxPosition.y, fbxPosition.z);
+  vtx->pos.Set((float)fbxPosition.mData[0], (float)fbxPosition.mData[1], (float)fbxPosition.mData[2]);
   mesh->indices.push_back(idx);
-  mesh->nvertices = std::max(mesh->nvertices, (unsigned int)idx+1);
+  mesh->nvertices = std::max(mesh->nvertices, idx+1);
 }
 void setNormal(TImporterContext *context, int idx, float x, float y, float z) {
   TImporter *importer = static_cast<TImporter *>(context->user_data);
@@ -292,9 +293,16 @@ void setNormal(TImporterContext *context, int idx, float x, float y, float z) {
 
 	char* base = (char*)mesh->vertices;
 	char* curr = base + mesh->nbytes_per_vertex * idx;
-	x *= 4096;
-	y *= -4096;
-	z *= 4096;
+	FbxAMatrix locMtx, rotMtx;
+	FbxVector4 fbxPosition(x, y, z, 1.0f);
+	locMtx.SetT(fbxPosition);
+	rotMtx.SetROnly(mesh->fbxMtx.GetR());
+	locMtx = rotMtx * locMtx;
+	fbxPosition = locMtx.GetT();
+
+	x = (float)fbxPosition.mData[0] * 4096.0f;
+	y = (float)fbxPosition.mData[1] * 4096.0f;
+	z = (float)fbxPosition.mData[2] * 4096.0f;
 	if (importer->m_params.m_vertexFormatOutput == TImportParams::EVertexFormatOutput::VERTEX_NORMAL) 
 	{
 		TMesh::TVertexPosNormal* vtx = (TMesh::TVertexPosNormal*)curr;
@@ -485,7 +493,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 
 	fprintf(f, "static u_short %s_Indices[] = {\n    ", mesh.name.c_str());
   constexpr int indexs_by_line = 32;
-	int nindices = mesh.indices.size();
+	int nindices = (int)mesh.indices.size();
   //swap indices to psx format
 	for (int idx = 0; idx < nindices; idx += 3) {
 		int prev_idx = mesh.indices[idx + 1];

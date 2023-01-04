@@ -109,7 +109,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;FBXSDK_SHARED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(FBX_SDK)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="fbx_helpers.cpp" />
     <ClCompile Include="file_utils.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="fbx_importer.cpp" />
@@ -147,10 +148,10 @@
     <ClCompile Include="string_utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="fbx_helpers.h" />
     <ClInclude Include="fbx_importer.h" />
     <ClInclude Include="fbx_parser.h" />
     <ClInclude Include="file_utils.h" />
-    <ClInclude Include="math_utils.h" />
     <ClInclude Include="string_utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
