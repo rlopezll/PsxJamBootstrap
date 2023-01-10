@@ -36,5 +36,9 @@ Demo to play sfx and music.
 - do_cdrom.bat: to generate a .bin file
 NOTE: we need a cdrom(bin) file because the music is embedded into CDROM image (like a audio tracks inside cd), in the emu the music not works. (only music, sfxs files works well in the emu)
 
+## demo1
+Draw a car with music and sfx.
+
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/demo1.JPG?raw=true" width="75%" height="75%">
 
 
