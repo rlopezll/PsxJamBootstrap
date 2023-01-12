@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <fbxsdk.h>
+#include <map>
 #include <fbxsdk/core/math/fbxaffinematrix.h>
 
 enum ResultParserFBX {
@@ -9,6 +10,24 @@ enum ResultParserFBX {
   FBX_MUST_BE_TRIANGLES,
   CAN_OPEN_SCENE
 };
+
+enum class EAnimCurve {
+	Translation,
+	Rotation,
+	Scaling
+};
+
+struct SAnimFrame {
+	float tx, ty, tz;
+	float rx, ry, rz;
+	float sx, sy, sz;
+  SAnimFrame() {
+		tx = ty = tz = rx = ry = rz = 0.0f;
+		sx = sy = sz = 1.0f;
+  }
+};
+
+typedef std::map<int,SAnimFrame> Animation;
 
 struct SVertexInfo {
   float x,y,z;
@@ -55,6 +74,8 @@ typedef struct {
   void (*addMeshAttribute)(TImporterContext *context, const char *path, const char *value);
   void (*addMaterialAttribute)(TImporterContext *context, const char *material_path, const char *value);
   void (*addEntity)(TImporterContext *context, const char *name, FbxAMatrix &mtx);
+
+  void (*addNewAnimation)(TImporterContext *context, const Animation& animation);
 
 } SFBXParserInterface;
 

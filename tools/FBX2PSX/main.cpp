@@ -15,6 +15,8 @@
 #define DEG2RAD( a ) ( (a) * (gfPI/180.0f) )
 #define RAD2DEG( a ) ( (a) * (180.0f/gfPI) )
 
+char version[] = "0.1b";
+
 struct TArgsParser {
 	int argc;
 	char** argv;
@@ -75,6 +77,7 @@ int main(int argc, char** argv)
 {
 	if (argc < 2)
 	{
+		printf("FBX2PSX version: %s\n", version);
 		printf("Help commands:\n");
 		printf("-fbx <input_fbx_filename>\n");
 		printf("-outdir <out_folder_h>\n");
@@ -88,6 +91,7 @@ int main(int argc, char** argv)
 		printf("    5: VERTEX_NORMAL_COLOR\n");
 		printf("    6: VERTEX_NORMAL_UV\n");
 		printf("-texture_size <x,y>\n");
+		printf("-animation <name> export animation file\n");
 		printf("-scale   <value> OPTIONAL default:1\n");
 		printf("-yaw     <value in degrees> OPTIONAL default:0\n");
 		printf("-pitch   <value in degrees> OPTIONAL default:0\n");
@@ -148,6 +152,9 @@ int main(int argc, char** argv)
 	}
 	if (args_parser.GetFloatArg("-roll", roll)) {
 		roll = DEG2RAD(roll);
+	}
+	if (args_parser.GetStringArg("-anim", params.m_animationName)) {
+		params.m_exportAnimation = true;
 	}
 	FbxAMatrix rotationMatrix, scaleMatrix;
 	rotationMatrix.SetROnly(FbxVector4(roll, pitch, yaw, 1.0f));

@@ -5,6 +5,8 @@
 #include <fbxsdk/core/math/fbxaffinematrix.h>
 #include <fbxsdk/core/arch/fbxtypes.h>
 
+extern char version[];
+
 struct TImportParams {
   enum class EVertexFormatOutput {
 		VERTEX,
@@ -23,7 +25,9 @@ struct TImportParams {
 
   std::string m_rootFolder;
   std::string m_outFolderMeshes;
-  bool        m_overwriteMeshes;
+	bool        m_overwriteMeshes;
+	bool        m_exportAnimation = false;
+	std::string m_animationName;
   int         m_textureSize[2] = {32, 32};
   EVertexFormatOutput m_vertexFormatOutput = EVertexFormatOutput::VERTEX;
   int         m_flipUVFlags = (int)EFlipUVFlag::VERTICAL_FLIP;

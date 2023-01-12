@@ -10,6 +10,11 @@
 #include <functional>
 #include <fbxsdk/core/math/fbxaffinematrix.h>
 
+#define M_PI 3.14159265358979323846
+#define RAD2DEG(angle) (angle * 180.0f) / M_PI
+#define DEG2PSX(angle) (angle / 360.0f) * 4096
+#define RAD2PSX(angle) (short)(((RAD2DEG(angle)) / 360.0f) * 4096)
+
 struct Vector3 {
   short x,y,z;
   void Set(float _x, float _y, float _z) {
@@ -46,8 +51,10 @@ struct TMesh {
 	};
 
 	struct TTransform {
-		float time;
-		FbxAMatrix mtx;
+		int   frame;
+		//short	m[3][3]; /* 3x3 rotation matrix */
+		short r[3];
+		long  t[3];		 /* transfer vector */
 	};
 
 	struct TVertex {
@@ -111,8 +118,7 @@ struct TMesh {
 	TVertexType          vertex_type;
 	size_t               nbytes_per_vertex;
 	FbxAMatrix           fbxMtx;
-	unsigned int         nframes;
-	TTransform*          transforms;
+	std::vector<TTransform> frames;
 	std::vector<SVertexInfo> all_vertices; //used to search unique vertexs
 
   TMesh() : vertex_type(TMesh::VERTEX_POSITION) {}
@@ -389,6 +395,58 @@ void setTexture(TImporterContext *context, const char *filename, const char *cha
 	// not do nothing
 }
 
+void addNewAnimation(TImporterContext* context, const Animation& animation) {
+	TImporter* importer = static_cast<TImporter*>(context->user_data);
+	TMesh* mesh = importer->getMesh();
+	assert(mesh);
+
+	for (std::map<int, SAnimFrame>::const_iterator it = animation.begin(); it != animation.end(); ++it)
+	{
+		TMesh::TTransform transform;
+		transform.frame = it->first;
+
+		//FbxAMatrix mtx;
+		//FbxVector4 loc(it->second.tx, it->second.ty, it->second.tz, 1.0f);
+		//FbxVector4 rotation(it->second.rx, it->second.ry, it->second.rz);
+		//FbxVector4 scale(it->second.sx, it->second.sy, it->second.sz);
+		//mtx.SetTRS(loc, rotation, scale);
+
+		//transform.m[0][0] = (short)(mtx.mData[0][0] * 4096.0f);
+		//transform.m[0][1] = (short)(mtx.mData[0][1] * 4096.0f);
+		//transform.m[0][2] = (short)(mtx.mData[0][2] * 4096.0f);
+
+		//transform.m[1][0] = (short)(mtx.mData[1][0] * 4096.0f);
+		//transform.m[1][1] = (short)(mtx.mData[1][1] * 4096.0f);
+		//transform.m[1][2] = (short)(mtx.mData[1][2] * 4096.0f);
+
+		//transform.m[2][0] = (short)(mtx.mData[2][0] * 4096.0f);
+		//transform.m[2][1] = (short)(mtx.mData[2][1] * 4096.0f);
+		//transform.m[2][2] = (short)(mtx.mData[2][2] * 4096.0f);
+
+		//transform.t[0] = (long)mtx.mData[3][0];
+		//transform.t[1] = (long)mtx.mData[3][1];
+		//transform.t[2] = (long)mtx.mData[3][2];
+
+		transform.r[0] = DEG2PSX(it->second.rx);
+		transform.r[1] = DEG2PSX(it->second.ry);
+		transform.r[2] = DEG2PSX(it->second.rz);
+
+		transform.t[0] = it->second.tx;
+		transform.t[1] = it->second.ty;
+		transform.t[2] = it->second.tz;
+
+		mesh->frames.push_back(transform);
+	}
+}
+
+void writeHeader(FILE* f) {
+	fprintf(f, "// -----------------------------------\n");
+	fprintf(f, "// Auto generated file\n");
+	fprintf(f, "// FBX2PSX version %s \n", version);
+	fprintf(f, "// GameJam: GameDev Challenge 2023 \n", version);
+	fprintf(f, "// ------------------------------------\n\n");
+}
+
 bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams& params) {
   if (!mesh.isValid()) {
     printf("Error! Create mesh invalid\n");
@@ -398,6 +456,8 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
   //save binary mesh file
   FILE *f = fopen(filename.c_str(), "wb");
   assert(f);
+
+	writeHeader(f);
 
   std::string name = FileUtils::getFilenameName(filename);
   std::string upper_name = name;
@@ -489,7 +549,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 				fprintf(f, "\n");
 		}
 	}
-	fprintf(f, "};\n");
+	fprintf(f, "};\n\n");
 
 	fprintf(f, "static u_short %s_Indices[] = {\n    ", mesh.name.c_str());
   constexpr int indexs_by_line = 32;
@@ -511,7 +571,7 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 			fprintf(f, "\n    ");
     }
 	}
-	fprintf(f, "\n};\n");
+	fprintf(f, "\n};\n\n");
   std::string vertex_type_str = "POLIGON_VERTEX";
 	switch (params.m_vertexFormatOutput) {
 		case TImportParams::EVertexFormatOutput::VERTEX_COLOR:
@@ -545,12 +605,63 @@ bool writeMeshFile(TMesh &mesh, const std::string &filename, const TImportParams
 			break;
 		}
 	}
-  fprintf(f,"static SDC_Mesh3D %s_Mesh = {%s_Vertices, %s_Indices, NULL, %d, %d, %s};\n", mesh.name.c_str(), mesh.name.c_str(), mesh.name.c_str(), nindices, mesh.nvertices, vertex_type_str.c_str());
+  fprintf(f,"static SDC_Mesh3D %s_Mesh = {%s_Vertices, %s_Indices, NULL, %d, %d, %s};\n\n", mesh.name.c_str(), mesh.name.c_str(), mesh.name.c_str(), nindices, mesh.nvertices, vertex_type_str.c_str());
 
 	fprintf(f, "#endif");
 
   fclose(f);
   return true;
+}
+
+
+bool writeAnimFile(TMesh& mesh, const std::string& filename, const TImportParams& params) {
+	if (!mesh.isValid()) {
+		printf("Error! Exporting animation, mesh invalid\n");
+		return false;
+	}
+
+	int nframes = mesh.frames.size();
+	if(nframes == 0)
+		return true;
+
+	//save binary mesh file
+	FILE* f = fopen(filename.c_str(), "wb");
+	assert(f);
+	writeHeader(f);
+
+	std::string name = FileUtils::getFilenameName(filename);
+	std::string upper_name = name;
+	std::transform(name.begin(), name.end(), upper_name.begin(), std::toupper);
+	std::string upper_anim_name = params.m_animationName;
+	std::transform(params.m_animationName.begin(), params.m_animationName.end(), upper_anim_name.begin(), std::toupper);
+
+	fprintf(f, "#ifndef _%s_%s_ANIM_\n#define _%s_%s_ANIM_\n\n", upper_name.c_str(), upper_anim_name.c_str(), upper_name.c_str(), upper_anim_name.c_str());
+	fprintf(f, "#include <types.h>\n");
+	fprintf(f, "#include \"dcRender.h\"\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "static SDC_AnimFrame %s_%s_Frames[] = {\n", mesh.name.c_str(), params.m_animationName.c_str());
+	for (int idx=0;idx< nframes;++idx) {
+		fprintf(f, "    { %d, %d, %d, %d,   %d, %d, %d, %d }" 
+			, mesh.frames[idx].r[0], mesh.frames[idx].r[1], mesh.frames[idx].r[2], mesh.frames[idx].frame
+			, mesh.frames[idx].t[0], mesh.frames[idx].t[1], mesh.frames[idx].t[2], 0);
+		if (idx < mesh.frames.size() - 1)
+		{
+			fprintf(f, ", \n");
+		}
+		else
+		{
+			fprintf(f, "\n    ");
+		}
+	}
+	fprintf(f, "};\n\n");
+
+	fprintf(f, "static SDC_Animation %s_%sAnimation = {%s_%s_Frames, %d};\n\n", mesh.name.c_str(), params.m_animationName.c_str(), mesh.name.c_str(), params.m_animationName.c_str(), nframes);
+
+	fprintf(f, "#endif");
+
+	fclose(f);
+	return true;
 }
 
 std::string TImportParams::getRelativeFolder(const std::string &folder) const {
@@ -577,7 +688,7 @@ void TImportParams::refreshAbsolutePaths() {
 	}
 }
 
-void doMeshes(const char *filename, const TImportParams &params, TImporter &fbx) {
+void doMeshes(const TImportParams &params, TImporter &fbx) {
   // Meshes
   for (auto &m : fbx.m_meshes) {
     std::string ofilename = params.m_outFolderMeshes + std::string(m.name) + ".h";
@@ -586,6 +697,14 @@ void doMeshes(const char *filename, const TImportParams &params, TImporter &fbx)
       writeMeshFile(m, ofilename, params);
     }
   }
+}
+
+void doAnimation(const TImportParams& params, TImporter& fbx) {
+	// Meshes
+	for (auto& m : fbx.m_meshes) {
+		std::string ofilename = params.m_outFolderMeshes + std::string(m.name) + "_anim.h";
+		writeAnimFile(m, ofilename, params);
+	}
 }
 
 bool importMeshFromFBX(const char *filename, const TImportParams &params) {
@@ -604,10 +723,14 @@ bool importMeshFromFBX(const char *filename, const TImportParams &params) {
   context.inter->setBinormal = nullptr;
   context.inter->setTexture = &setTexture;
 	context.inter->getVertexIndex = &getVertexIndex;
+	context.inter->addNewAnimation = &addNewAnimation;
   context.user_data =(void *)(&fbx);
   ResultParserFBX res = parserFBX(filename, &context);
   if (res == ResultParserFBX::OK) {
-    doMeshes(filename, params, fbx);
+		doMeshes(params, fbx);
+		if (params.m_exportAnimation) {
+			doAnimation(params, fbx);
+		}
   }
 	else if (res == ResultParserFBX::FBX_MUST_BE_TRIANGLES) {
 		printf("Error: ResultParserFBX = FBX Must Be Triangles");

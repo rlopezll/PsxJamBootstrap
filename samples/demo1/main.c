@@ -8,16 +8,19 @@
 #include "dcRender.h"
 #include "dcAudio.h"
 
-#include "meshes/carroceria.h"
-#include "meshes/rueda_t_d001.h"
-#include "meshes/rueda_t_d002.h"
-#include "meshes/rueda_t_d003.h"
-#include "meshes/rueda_t_d004.h"
+// #include "meshes/carroceria.h"
+// #include "meshes/rueda_t_d001.h"
+// #include "meshes/rueda_t_d002.h"
+// #include "meshes/rueda_t_d003.h"
+// #include "meshes/rueda_t_d004.h"
 
-#include "meshes/suspension_d_d.h"
-#include "meshes/suspension_d_i.h"
-#include "meshes/suspension_t_d.h"
-#include "meshes/suspension_t_i.h"
+// #include "meshes/suspension_d_d.h"
+// #include "meshes/suspension_d_i.h"
+// #include "meshes/suspension_t_d.h"
+// #include "meshes/suspension_t_i.h"
+
+#include "meshes/Box001.h"
+#include "meshes/Box001_anim.h"
 
 extern unsigned long _binary_data_accept_vag_start[];
 extern unsigned long _binary_data_beep_vag_start[];
@@ -37,8 +40,9 @@ int main(void)
     SDC_Sfx bellSfx;
     int  width = 640;
     int  height = 240;
-    long distanceY = 50;
-    long distanceZ = 100;
+
+    long distance = 800;
+    long cameraHeight = 600;
 
     // long distanceY = 00;
     // long distanceZ = 600;
@@ -46,7 +50,7 @@ int main(void)
     CVECTOR bgColor = {60, 120, 120}; 
     dcRender_Init(&render, width, height, bgColor, 4096, 16192, RENDER_MODE_PAL);
     dcCamera_SetScreenResolution(&camera, width, height);
-    dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
+    dcCamera_SetCameraPosition(&camera, 0, cameraHeight, distance);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
     
     TIM_IMAGE diffuse;
@@ -59,7 +63,7 @@ int main(void)
     SDC_DrawParams draw_params_teapot = {
         .tim = &diffuse,
         .constantColor = {255, 255, 255},
-        .bLighting = 1,
+        .bLighting = 0,
         .bUseConstantColor = 0
     };
 
@@ -118,17 +122,20 @@ int main(void)
 
         FntPrint("GameDev Challenge Audio\n");
 
-        rotation.vy += 16; 
+        // rotation.vy += 16; 
 
         RotMatrix(&rotation, &transform);
+        //RotMatrix(&Box001_idle_Frames[1].rot, &transform);
         TransMatrix(&transform, &translationTeapot);
         dcCamera_ApplyCameraTransform(&camera, &transform, &transform);
-        dcRender_DrawMesh(&render, &carroceria_Mesh, &transform, &draw_params_teapot);  
+        dcRender_DrawMesh(&render, &Box001_Mesh, &transform, &draw_params_teapot);  
 
-        dcRender_DrawMesh(&render, &rueda_t_d001_Mesh, &transform, &draw_params_teapot);  
-        dcRender_DrawMesh(&render, &rueda_t_d002_Mesh, &transform, &draw_params_teapot);  
-        dcRender_DrawMesh(&render, &rueda_t_d003_Mesh, &transform, &draw_params_teapot);  
-        dcRender_DrawMesh(&render, &rueda_t_d004_Mesh, &transform, &draw_params_teapot);  
+        // dcRender_DrawMesh(&render, &carroceria_Mesh, &transform, &draw_params_teapot);  
+
+        // dcRender_DrawMesh(&render, &rueda_t_d001_Mesh, &transform, &draw_params_teapot);  
+        // dcRender_DrawMesh(&render, &rueda_t_d002_Mesh, &transform, &draw_params_teapot);  
+        // dcRender_DrawMesh(&render, &rueda_t_d003_Mesh, &transform, &draw_params_teapot);  
+        // dcRender_DrawMesh(&render, &rueda_t_d004_Mesh, &transform, &draw_params_teapot);  
 
         // dcRender_DrawMesh(&render, &suspension_d_d_Mesh, &transform, &draw_params_teapot);  
         // dcRender_DrawMesh(&render, &suspension_d_i_Mesh, &transform, &draw_params_teapot);  

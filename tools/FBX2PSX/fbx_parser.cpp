@@ -15,6 +15,12 @@ bool LoadScene(FbxManager* pManager, FbxDocument* pScene, const char* pFilename)
 ResultParserFBX processNode(FbxNode* node, FbxAMatrix& pParentGlobalPosition, bool is_root);
 ResultParserFBX processMesh(FbxMesh* pMesh);
 
+// Animation
+void parserAnimation(FbxAnimStack* pAnimStack, FbxNode* pNode);
+void parserAnimationLayerChannel(FbxAnimLayer* pAnimLayer, FbxNode* pNode, Animation& animation, EAnimCurve animCurve, const char* channel);
+void parserAnimationLayer(FbxAnimLayer* pAnimLayer, FbxNode* pNode);
+void addAnimationData(Animation& animation, EAnimCurve animCurve, const std::string& channel, int frame, float value);
+
 TImporterContext *g_context = nullptr;
 
 ResultParserFBX parserFBX(const char *filename, TImporterContext *context)
@@ -37,30 +43,116 @@ ResultParserFBX parserFBX(const char *filename, TImporterContext *context)
 		FbxAMatrix lDummyGlobalPosition;
 		ResultParserFBX res = processNode(lRootNode, lDummyGlobalPosition, true);
 
-    /*FbxAnimStack *anim_stack = lScene->GetCurrentAnimationStack();
-    if (anim_stack) {
-      int a = 0;
-      a = 3;
-      int nbAnimLayers = anim_stack->GetMemberCount<FbxAnimLayer>();
-      for (int l = 0; l < nbAnimLayers; l++)
-      {
-        FbxAnimLayer* anim_layer = anim_stack->GetMember<FbxAnimLayer>(l);
-        for (auto &n : g_nodes) {
-          FbxAnimCurve* lAnimCurve = n->LclRotation.GetCurve(anim_layer, FBXSDK_CURVENODE_COMPONENT_X);
-          if (lAnimCurve) {
-            printf("Node '%s' has anim\n", n->GetName());
-            a = 5;
-          }
-        }
-      }
+		//int nbAnimStacks = lScene->GetSrcObjectCount<FbxAnimStack>();
+		//for (int i = 0; i < nbAnimStacks; i++)
+		//{
+		//	FbxAnimStack* lAnimStack = lScene->GetSrcObject<FbxAnimStack>(i);
+  //    parserAnimation(lAnimStack, lScene->GetRootNode());
+		//}
 
-    }*/
     return res;
   }
   else {
     return ResultParserFBX::CAN_OPEN_SCENE;
   }
 
+}
+
+void parserAnimation(FbxAnimStack* pAnimStack, FbxNode* pNode)
+{
+	int nbAnimLayers = pAnimStack->GetMemberCount<FbxAnimLayer>();
+	for (int l = 0; l < nbAnimLayers; l++)
+	{
+		FbxAnimLayer* lAnimLayer = pAnimStack->GetMember<FbxAnimLayer>(l);
+    parserAnimationLayer(lAnimLayer, pNode);
+	}
+}
+
+void parserAnimationLayer(FbxAnimLayer* pAnimLayer, FbxNode* pNode)
+{
+	Animation animation;
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Translation, FBXSDK_CURVENODE_COMPONENT_X);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Translation, FBXSDK_CURVENODE_COMPONENT_Y);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Translation, FBXSDK_CURVENODE_COMPONENT_Z);
+
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Rotation, FBXSDK_CURVENODE_COMPONENT_X);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Rotation, FBXSDK_CURVENODE_COMPONENT_Y);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Rotation, FBXSDK_CURVENODE_COMPONENT_Z);
+
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Scaling, FBXSDK_CURVENODE_COMPONENT_X);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Scaling, FBXSDK_CURVENODE_COMPONENT_Y);
+	parserAnimationLayerChannel(pAnimLayer, pNode, animation, EAnimCurve::Scaling, FBXSDK_CURVENODE_COMPONENT_Z);
+	g_context->inter->addNewAnimation(g_context, animation);
+
+	//for (int lModelCount = 0; lModelCount < pNode->GetChildCount(); lModelCount++)
+	//{
+ //   parserAnimationLayer(pAnimLayer, pNode->GetChild(lModelCount));
+	//}
+}
+
+void parserAnimationLayerChannel(FbxAnimLayer* pAnimLayer, FbxNode* pNode, Animation& animation, EAnimCurve animCurve, const char* channel)
+{
+	FbxAnimCurve* lAnimCurve = nullptr;
+	if (animCurve == EAnimCurve::Translation) {
+		lAnimCurve = pNode->LclTranslation.GetCurve(pAnimLayer, channel);
+	}
+	else if (animCurve == EAnimCurve::Rotation) {
+		lAnimCurve = pNode->LclRotation.GetCurve(pAnimLayer, channel);
+	}
+	else if (animCurve == EAnimCurve::Scaling) {
+		lAnimCurve = pNode->LclScaling.GetCurve(pAnimLayer, channel);
+	}
+  if(!lAnimCurve)
+    return;
+
+	int lKeyCount = lAnimCurve->KeyGetCount();
+	for (int lCount = 0; lCount < lKeyCount; lCount++)
+	{
+		FbxTime lKeyTime = lAnimCurve->KeyGetTime(lCount);
+		FbxLongLong Frame = lKeyTime.GetFrameCount();
+		float lKeyValue = static_cast<float>(lAnimCurve->KeyGetValue(lCount));
+		addAnimationData(animation, animCurve, channel, Frame, lKeyValue);
+	}
+}
+
+void addAnimationData(Animation& animation, EAnimCurve animCurve, const std::string& channel, int frame, float value)
+{
+	if (animation.find(frame) == animation.end()) {
+		animation.insert({ frame, SAnimFrame() });
+	}
+	SAnimFrame& animFrame = animation[frame];
+	switch (animCurve) {
+	case EAnimCurve::Translation:
+	{
+		if (channel == FBXSDK_CURVENODE_COMPONENT_X)
+			animFrame.tx = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Y)
+			animFrame.ty = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Z)
+			animFrame.tz = value;
+		break;
+	}
+	case EAnimCurve::Rotation:
+	{
+		if (channel == FBXSDK_CURVENODE_COMPONENT_X)
+			animFrame.rx = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Y)
+			animFrame.rz = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Z)
+			animFrame.ry = -value;
+		break;
+	}
+	case EAnimCurve::Scaling:
+	{
+		if (channel == FBXSDK_CURVENODE_COMPONENT_X)
+			animFrame.sx = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Y)
+			animFrame.sy = value;
+		else if (channel == FBXSDK_CURVENODE_COMPONENT_Z)
+			animFrame.sz = value;
+		break;
+	}
+	}
 }
 
 void InitializeSdkObjects(FbxManager*& pManager, FbxScene*& pScene)
@@ -233,6 +325,14 @@ ResultParserFBX processNode(FbxNode* node, FbxAMatrix& pParentGlobalPosition, bo
     }
     FbxMesh *mesh = node->GetMesh();
     ret = processMesh(mesh);
+
+		int nbAnimStacks = node->GetScene()->GetSrcObjectCount<FbxAnimStack>();
+		for (int i = 0; i < nbAnimStacks; i++)
+		{
+			FbxAnimStack* lAnimStack = node->GetScene()->GetSrcObject<FbxAnimStack>(i);
+			parserAnimation(lAnimStack, node);
+		}
+
     processed = true;
   }
 
