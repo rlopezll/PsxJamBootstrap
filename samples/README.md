@@ -41,4 +41,7 @@ Draw a car with music and sfx.
 
 <img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/demo1.JPG?raw=true" width="75%" height="75%">
 
+## noise
+Generate a terrain mesh with noise.
 
+<img src="https://github.com/rlopezll/PsxJamBootstrap/blob/main/samples/screenshots/noise.JPG?raw=true" width="75%" height="75%">
