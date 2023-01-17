@@ -5,7 +5,6 @@ SRCS = main.c smile.tim \
 ../../third_party/common/syscalls/printf.s \
 ../../third_party/common/crt0/crt0.s \
 ../../source/dcLibPsx/src/dcMemory.c\
-../../source/dcLibPsx/src/dcMesh.c\
 ../../source/dcLibPsx/src/dcCamera.c\
 ../../source/dcLibPsx/src/dcMath.c\
 ../../source/dcLibPsx/src/dcMisc.c\

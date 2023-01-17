@@ -49,7 +49,7 @@ int main(void)
     dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
     
-    TIM_IMAGE diffuse;
+    SDC_TIM_IMAGE diffuse;
     dcRender_LoadTexture(&diffuse, _binary_meshes_FType_PSX_tim_start);  
 
     SVECTOR rotation = {0};

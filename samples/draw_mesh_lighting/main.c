@@ -34,7 +34,7 @@ int main(void)
     dcCamera_SetCameraPosition(&camera, 0, distanceY, distanceZ);
     dcCamera_LookAt(&camera, &VECTOR_ZERO);
 
-    TIM_IMAGE tim_smile;
+    SDC_TIM_IMAGE tim_smile;
     dcRender_LoadTexture(&tim_smile, _binary_smile_tim_start);  
 
     SVECTOR rotation = {0};

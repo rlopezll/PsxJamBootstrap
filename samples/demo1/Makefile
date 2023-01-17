@@ -5,7 +5,6 @@ SRCS = main.c meshes\FType_PSX.tim data/accept.vag data/beep.vag data/bell.vag \
 ../../third_party/common/syscalls/printf.s \
 ../../third_party/common/crt0/crt0.s \
 ../../source/dcLibPsx/src/dcMemory.c\
-../../source/dcLibPsx/src/dcMesh.c\
 ../../source/dcLibPsx/src/dcCamera.c\
 ../../source/dcLibPsx/src/dcMath.c\
 ../../source/dcLibPsx/src/dcRender.c\

@@ -5,7 +5,6 @@ SRCS = main.c \
 		../third_party/common/syscalls/printf.s \
 		../third_party/common/crt0/crt0.s \
 		dcLibPsx/src/dcMemory.c\
-		dcLibPsx/src/dcMesh.c\
 		dcLibPsx/src/dcCamera.c\
 		dcLibPsx/src/dcMath.c\
 		dcLibPsx/src/dcRender.c\
